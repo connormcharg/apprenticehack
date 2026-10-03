@@ -77,12 +77,28 @@ class Membership(models.Model):
 
 
 class Event(models.Model):
-    """A meet-up organised inside a community."""
+    """A meet-up organised inside a community.
+
+    Every event belongs to exactly one community — there is no such thing as a
+    community-less event. ``kind`` and ``topic`` carry the old events page's
+    categorisation so the calendar and filters keep working.
+    """
+
+    KINDS = [
+        ("hackathon", "Hackathon"),
+        ("social", "Social"),
+        ("multi-company", "Multi-company"),
+        ("learning", "Learning"),
+    ]
 
     community = models.ForeignKey(
         Community, on_delete=models.CASCADE, related_name="events"
     )
     title = models.CharField(max_length=200)
+    kind = models.CharField(max_length=20, choices=KINDS, default="social")
+    topic = models.CharField(
+        max_length=120, blank=True, help_text="e.g. cybersecurity, climbing, CV help"
+    )
     description = models.TextField(blank=True)
     starts_at = models.DateTimeField()
     location = models.CharField(max_length=200, blank=True, help_text="Place or link")

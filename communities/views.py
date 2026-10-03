@@ -120,6 +120,18 @@ def community_list(request):
     )
     created = Community.objects.filter(created_by=request.user).first()
 
+    # Events live inside communities, so the merged page lists them here too.
+    event_kind = request.GET.get("event_kind", "").strip()
+    upcoming_events = (
+        Event.objects.filter(starts_at__gte=timezone.now())
+        .select_related("community")
+        .prefetch_related("rsvps")
+        .order_by("starts_at")
+    )
+    if event_kind:
+        upcoming_events = upcoming_events.filter(kind=event_kind)
+    upcoming_events = upcoming_events[:8]
+
     # Suggestions: communities that match the profile and haven't been joined.
     recommended = []
     if apprentice is not None:
@@ -142,6 +154,9 @@ def community_list(request):
             "my_ids": my_ids,
             "created": created,
             "apprentice": apprentice,
+            "upcoming_events": upcoming_events,
+            "event_kinds": Event.KINDS,
+            "active_event_kind": event_kind,
             "filters": {
                 "q": query,
                 "company": company,

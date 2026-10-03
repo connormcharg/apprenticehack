@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -147,12 +149,14 @@ class CommunityViewTests(TestCase):
             reverse("communities:event_create", args=[community.pk]),
             {
                 "title": "Meetup",
+                "kind": "social",
                 "starts_at": "2030-01-01T18:30",
                 "location": "Cafe",
             },
         )
         event = Event.objects.get()
         self.assertEqual(event.community, community)
+        self.assertEqual(event.kind, "social")
         self.assertTrue(EventRSVP.objects.filter(event=event, user=self.user).exists())
 
     def test_detail_page_renders(self):
@@ -192,6 +196,35 @@ class CommunityViewTests(TestCase):
             self.client.get(reverse("communities:event_create", args=[community.pk])).status_code,
             200,
         )
+
+    def test_list_shows_upcoming_events(self):
+        owner = make_user("owner@example.com")
+        community = Community.objects.create(name="Eventful", created_by=owner)
+        Event.objects.create(
+            community=community,
+            created_by=owner,
+            title="Hack night",
+            kind="hackathon",
+            starts_at=timezone.now() + timedelta(days=3),
+        )
+        response = self.client.get(reverse("communities:list"))
+        self.assertContains(response, "Hack night")
+        self.assertContains(response, "Eventful")
+
+    def test_list_event_kind_filter(self):
+        owner = make_user("owner@example.com")
+        community = Community.objects.create(name="Eventful", created_by=owner)
+        Event.objects.create(
+            community=community, created_by=owner, title="Hack night", kind="hackathon",
+            starts_at=timezone.now() + timedelta(days=3),
+        )
+        Event.objects.create(
+            community=community, created_by=owner, title="Coffee social", kind="social",
+            starts_at=timezone.now() + timedelta(days=4),
+        )
+        response = self.client.get(reverse("communities:list"), {"event_kind": "social"})
+        self.assertContains(response, "Coffee social")
+        self.assertNotContains(response, "Hack night")
 
     def test_owner_cannot_leave_own_community(self):
         community = Community.objects.create(name="Mine", created_by=self.user)

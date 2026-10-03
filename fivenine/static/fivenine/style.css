@@ -968,6 +968,18 @@ a.task-row .task-dur {
   transform: rotate(-45deg) translateY(-1px);
 }
 
+.check--sm {
+  width: 22px;
+  height: 22px;
+}
+
+.check--sm.on::after {
+  width: 9px;
+  height: 5px;
+  border-left-width: 2px;
+  border-bottom-width: 2px;
+}
+
 .action-main {
   flex: 1;
   text-decoration: none;
@@ -986,10 +998,32 @@ a.task-row .task-dur {
   color: var(--muted);
 }
 
-.subtask {
-  margin-left: 1.2rem;
-  padding-left: 0.8rem;
-  border-left: 3px solid var(--border-strong);
+/* Tickable goal steps on the goal cards */
+
+.goal-steps {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.goal-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.goal-step-title {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task-row-card p {
@@ -1179,6 +1213,57 @@ a.task-row .task-dur {
 .cal-event .cal-time {
   font-weight: 700;
   color: #4c565c;
+}
+
+/* Calendar task slots: a tick box plus the task name */
+
+.cal-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.cal-check {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.1rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.cal-check:hover {
+  border-color: var(--accent);
+}
+
+.cal-check.on {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+
+.cal-check.on::after {
+  content: "";
+  width: 0.4rem;
+  height: 0.25rem;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.cal-task-title {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  overflow-wrap: break-word;
+}
+
+.cal-plan {
+  margin: 0 0 var(--space-3);
 }
 
 /* Events ----------------------------------------------------------------- */

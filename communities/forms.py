@@ -49,12 +49,15 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        fields = ["title", "description", "starts_at", "location"]
+        fields = ["title", "kind", "topic", "description", "starts_at", "location"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
             "starts_at": forms.DateTimeInput(
                 format="%Y-%m-%dT%H:%M",
                 attrs={"type": "datetime-local"},
+            ),
+            "topic": forms.TextInput(
+                attrs={"placeholder": "e.g. cybersecurity, climbing, CV help"}
             ),
             "location": forms.TextInput(attrs={"placeholder": "Place or link"}),
         }

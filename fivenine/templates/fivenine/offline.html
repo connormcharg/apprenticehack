@@ -1,0 +1,10 @@
+{% extends 'fivenine/base.html' %}
+{% block title %}Offline · 5-9 Planner{% endblock %}
+{% block content %}
+<h1 class="page-title">You&rsquo;re offline</h1>
+<p class="page-sub">This page needs a connection. Pages you&rsquo;ve already visited still work.</p>
+<div class="card">
+  <p>Check your connection, then try again.</p>
+  <p><button class="btn" type="button" onclick="location.reload()">Try again</button></p>
+</div>
+{% endblock %}
