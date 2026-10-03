@@ -55,7 +55,7 @@
           <span class="task-dur">{{ s.right }}</span>
         </a>
         {% else %}
-        <a class="task-row {{ s.css }}" href="{% url 'event_detail' s.event_id %}">
+        <a class="task-row {{ s.css }}" href="{% url 'communities:detail' s.community_id %}">
           <span class="task-time">{{ s.time }}</span>
           <span class="task-main"><strong>{{ s.title }}</strong><small>{{ s.meta }}</small></span>
           <span class="task-dur">{{ s.right }}</span>
@@ -92,8 +92,8 @@
     <section class="card" aria-labelledby="rec-heading">
       <h3 id="rec-heading">Recommended</h3>
       <p><strong>{{ recommendation.event.title }}</strong><br>
-      <span class="muted">{{ recommendation.reason }} · {{ recommendation.event.date|date:'l j M' }}{% if recommendation.event.location %} · {{ recommendation.event.location }}{% endif %}</span></p>
-      <p><a class="btn btn-secondary btn-small" href="{% url 'event_list' %}">See the event</a></p>
+      <span class="muted">{{ recommendation.reason }} · {{ recommendation.event.starts_at|date:'l j M' }}{% if recommendation.event.location %} · {{ recommendation.event.location }}{% endif %}</span></p>
+      <p><a class="btn btn-secondary btn-small" href="{% url 'communities:list' %}">See the event</a></p>
     </section>
     {% endif %}
   </div>

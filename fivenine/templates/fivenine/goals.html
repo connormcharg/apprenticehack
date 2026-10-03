@@ -11,7 +11,18 @@
     <p class="goal-stat" aria-label="{{ c.pct }} percent complete">{{ c.pct }}%</p>
     <div class="bar" role="progressbar" aria-valuenow="{{ c.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progress for {{ c.goal.title }}"><div class="fill" style="width:{{ c.pct }}%"></div></div>
     <p class="muted">{{ c.done }} of {{ c.total }} steps{% if c.goal.target_date %} · by {{ c.goal.target_date|date:'j M' }}{% endif %}</p>
-    {% if c.steps %}<p class="muted">Next: {{ c.steps.0.title }}</p>{% endif %}
+    {% if c.steps %}
+    <ul class="goal-steps">
+      {% for s in c.steps %}
+      <li class="goal-step">
+        <a class="check check--sm {% if s.done %}on{% endif %}" href="{% url 'task_toggle' s.pk %}?next={% url 'goal_list' %}" aria-label="{% if s.done %}Reopen{% else %}Mark done{% endif %}: {{ s.title }}"></a>
+        <a class="goal-step-title" href="{% url 'task_detail' s.pk %}">{{ s.title }}{% if s.due_date %} <small class="muted">{{ s.due_date|date:'D j M' }}</small>{% endif %}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No steps yet — add a task for this goal below.</p>
+    {% endif %}
     <p><a href="{% url 'goal_toggle' c.goal.pk %}">{% if c.goal.done %}Reopen{% else %}Mark done{% endif %}</a></p>
   </section>
   {% empty %}
@@ -54,9 +65,6 @@
   <p><span class="badge">{{ t.get_kind_display }} · {{ t.minutes }}m · {{ t.energy_label }} energy</span><br>
   <strong>{% if t.done %}Done — {% endif %}{{ t.title }}</strong>{% if t.goal %} <small>· {{ t.goal.title }}</small>{% endif %}{% if t.due_date %} <small>· due {{ t.due_date }}</small>{% endif %}{% if t.start_time %} <small>· {{ t.start_time|time:'H:i' }}</small>{% endif %}<br>
   <a href="{% url 'task_detail' t.pk %}">Details</a> · <a href="{% url 'task_toggle' t.pk %}?next=/goals/">{% if t.done %}Reopen{% else %}Done{% endif %}</a></p>
-  {% for s in t.subtasks.all %}
-  <p class="subtask"><strong>{% if s.done %}Done — {% endif %}{{ s.title }}</strong> <small>{{ s.minutes }}m</small> · <a href="{% url 'task_toggle' s.pk %}?next=/goals/">{% if s.done %}Reopen{% else %}Done{% endif %}</a></p>
-  {% endfor %}
 </div>
 {% endfor %}
 {% endblock %}

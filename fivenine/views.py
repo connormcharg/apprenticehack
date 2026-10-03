@@ -10,8 +10,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .forms import EnergyForm, EventForm, GoalForm, SignupForm, TaskForm
-from .models import CommunityEvent, EnergyLog, EventAttendee, Goal, Task, UserProfile, display_name_for
+from communities.models import Event
+
+from .forms import EnergyForm, GoalForm, SignupForm, TaskForm
+from .models import EnergyLog, Goal, Task, UserProfile, display_name_for
 
 
 def manifest(request):
@@ -21,7 +23,15 @@ def manifest(request):
 
 def service_worker(request):
     path = finders.find('fivenine/sw.js')
-    return FileResponse(open(path, 'rb'), content_type='application/javascript')
+    response = FileResponse(open(path, 'rb'), content_type='application/javascript')
+    # The worker must never be served stale, or updates never take effect.
+    response['Cache-Control'] = 'no-cache'
+    return response
+
+
+def offline(request):
+    """Offline fallback page, precached by the service worker."""
+    return render(request, 'fivenine/offline.html')
 
 
 # ---------- auth ----------
@@ -82,12 +92,14 @@ def dashboard(request):
     monday = selected - _td(days=selected.weekday())
 
     day_tasks = list(Task.objects.filter(user=user, done=False, due_date=selected).order_by('energy_cost'))
-    day_events = list(CommunityEvent.objects.filter(date=selected))
+    day_events = list(Event.objects.filter(starts_at__date=selected).select_related('community'))
     overdue = list(Task.objects.filter(user=user, done=False, due_date__lt=today).order_by('due_date'))
 
-    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'time': '', 'event_id': e.pk,
-              'meta': f'{e.get_kind_display()}' + (f' · {e.location}' if e.location else ''),
-              'right': e.date.strftime('%a'), 'toggle': None} for e in day_events]
+    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title,
+              'time': f'{e.starts_at:%H:%M}',
+              'community_id': e.community_id,
+              'meta': f'{e.get_kind_display()} · {e.community.name}' + (f' · {e.location}' if e.location else ''),
+              'right': 'Event', 'toggle': None} for e in day_events]
     slots += [{'css': f'slot-t-{t.kind}', 'title': t.title,
                'time': f'{t.start_time:%H:%M}' if t.start_time else '',
                'meta': f'{t.get_kind_display()} · {t.minutes} min' + (f' · {t.goal.title}' if t.goal else ''),
@@ -114,8 +126,8 @@ def dashboard(request):
         cap_note = 'Light week. Good space to push a goal forward.'
     study_week = [t for t in week_tasks if t.kind == 'study']
     study_mins = sum(t.minutes for t in study_week)
-    networking = CommunityEvent.objects.filter(
-        date__gte=today, kind__in=['hackathon', 'multi-company', 'learning']).count()
+    networking = Event.objects.filter(
+        starts_at__date__gte=today, kind__in=['hackathon', 'multi-company', 'learning']).count()
     free_mins = max(0, budget - planned_week)
     work_info = apprentice_work_info(user)
     glance = [
@@ -161,13 +173,12 @@ def goal_list(request):
     from .models import goal_next_steps, goal_progress
     user = request.user
     goals = Goal.objects.filter(user=user).order_by('done', 'target_date')
-    top_tasks = Task.objects.filter(user=user, parent__isnull=True).order_by('done', 'due_date').prefetch_related('subtasks')
+    top_tasks = Task.objects.filter(user=user).order_by('done', 'due_date')
     is_post = request.method == 'POST'
     form_type = request.POST.get('form_type', 'goal') if is_post else 'goal'
     goal_form = GoalForm(request.POST if is_post and form_type == 'goal' else None)
     task_form = TaskForm(request.POST if is_post and form_type == 'task' else None)
     task_form.fields['goal'].queryset = Goal.objects.filter(user=user, done=False)
-    task_form.fields['parent'].queryset = Task.objects.filter(user=user, parent__isnull=True, done=False)
     if is_post:
         if form_type == 'task' and task_form.is_valid():
             task = task_form.save(commit=False)
@@ -184,7 +195,7 @@ def goal_list(request):
         done, total = goal_progress(g)
         cards.append({'goal': g, 'done': done, 'total': total,
                       'pct': round(100 * done / total) if total else 0,
-                      'steps': goal_next_steps(g)})
+                      'steps': goal_next_steps(g, 5)})
     from datetime import timedelta as _td
     today = timezone.now().date()
     monday = today - _td(days=today.weekday())
@@ -232,49 +243,6 @@ def task_detail(request, pk):
         messages.success(request, 'Saved.')
         return redirect('task_detail', pk=pk)
     return render(request, 'fivenine/task_detail.html', {'task': task})
-
-
-@login_required
-def event_detail(request, pk):
-    event = get_object_or_404(CommunityEvent, pk=pk)
-    joined = EventAttendee.objects.filter(event=event, user=request.user).exists()
-    return render(request, 'fivenine/event_detail.html', {
-        'event': event, 'joined': joined,
-        'members': event.attendees.select_related('user'),
-    })
-
-
-@login_required
-def event_list(request):
-    kind = request.GET.get('kind', '')
-    events = CommunityEvent.objects.order_by('date').prefetch_related('attendees__user')
-    if kind:
-        events = events.filter(kind=kind)
-    form = EventForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        event = form.save()
-        EventAttendee.objects.get_or_create(event=event, user=request.user)
-        return redirect('event_list')
-    upcoming = events.filter(date__gte=timezone.now().date())
-    my_ids = set(EventAttendee.objects.filter(user=request.user).values_list('event_id', flat=True))
-    return render(request, 'fivenine/events.html', {
-        'events': events, 'upcoming': upcoming, 'form': form,
-        'active_kind': kind, 'kinds': CommunityEvent.KINDS,
-        'recommended': recommend_events(request.user, 3), 'my_ids': my_ids,
-    })
-
-
-@login_required
-def event_join(request, pk):
-    event = get_object_or_404(CommunityEvent, pk=pk)
-    EventAttendee.objects.get_or_create(event=event, user=request.user)
-    return redirect(request.GET.get('next', 'event_list'))
-
-
-@login_required
-def event_leave(request, pk):
-    EventAttendee.objects.filter(event_id=pk, user=request.user).delete()
-    return redirect(request.GET.get('next', 'event_list'))
 
 
 HOUSEHOLD_STARTERS = [
@@ -345,12 +313,16 @@ def recommend_events(user, limit=3):
         return hit
     profile = get_profile(user)
     skills = [s.strip().lower() for s in ((profile.skills or '') if profile else '').split(',') if s.strip()]
-    upcoming = list(CommunityEvent.objects.filter(date__gte=timezone.now().date()).prefetch_related('attendees'))
+    upcoming = list(
+        Event.objects.filter(starts_at__gte=timezone.now())
+        .select_related('community')
+        .prefetch_related('rsvps')
+    )
     scored = []
     for e in upcoming:
         text = f'{e.title} {e.topic} {e.description}'.lower()
         hits = [s for s in skills if len(s) > 2 and s in text]
-        members = e.attendees.count()
+        members = e.rsvps.count()
         score = 2 * len(hits) + min(members, 5) * 0.2 + (1 if e.kind in ('hackathon', 'multi-company') else 0)
         if hits:
             reason = f'Matches your interest in {hits[0]}'
@@ -365,12 +337,43 @@ def recommend_events(user, limit=3):
     return result
 
 
+def _schedule_open_tasks(user):
+    """Give undated open tasks (including goal steps) a slot across the week.
+
+    Mirrors the household planner: spread them over the evenings the user
+    asked for, so every task has a place on the calendar.
+    """
+    from datetime import timedelta as _td
+    profile = get_profile(user)
+    evenings = profile.evenings_per_week if profile else 4
+    today = timezone.now().date()
+    undated = list(
+        Task.objects.filter(user=user, done=False, due_date__isnull=True).order_by('energy_cost')
+    )
+    for i, task in enumerate(undated):
+        task.due_date = today + _td(days=i % max(1, evenings))
+        task.save(update_fields=['due_date'])
+    return len(undated)
+
+
 @login_required
 def calendar_view(request):
     """Month grid: your tasks (by due_date) + community events."""
     import calendar as calmod
     from datetime import date
     today = timezone.now().date()
+
+    if request.method == 'POST' and 'plan' in request.POST:
+        count = _schedule_open_tasks(request.user)
+        if count:
+            messages.success(
+                request,
+                f'Planned {count} task{"" if count == 1 else "s"} into your week.',
+            )
+        else:
+            messages.info(request, 'Nothing unscheduled to plan — you are all set.')
+        return redirect('calendar')
+
     try:
         year = int(request.GET.get('year', today.year))
         month = int(request.GET.get('month', today.month))
@@ -385,8 +388,8 @@ def calendar_view(request):
     tasks_by_day, events_by_day = {}, {}
     for t in Task.objects.filter(user=request.user, due_date__year=year, due_date__month=month):
         tasks_by_day.setdefault(t.due_date.day, []).append(t)
-    for e in CommunityEvent.objects.filter(date__year=year, date__month=month):
-        events_by_day.setdefault(e.date.day, []).append(e)
+    for e in Event.objects.filter(starts_at__year=year, starts_at__month=month).select_related('community'):
+        events_by_day.setdefault(e.starts_at.day, []).append(e)
 
     weeks = []
     for week in calmod.Calendar(firstweekday=0).monthdayscalendar(year, month):
@@ -401,10 +404,14 @@ def calendar_view(request):
         weeks.append(days)
     profile = get_profile(request.user)
     feed_url = request.build_absolute_uri(f'/calendar/feed-{profile.calendar_token}.ics') if profile else None
+    undated_count = Task.objects.filter(
+        user=request.user, done=False, due_date__isnull=True
+    ).count()
     return render(request, 'fivenine/calendar.html', {
         'year': year, 'month': month, 'month_name': calmod.month_name[month],
         'weeks': weeks, 'prev_year': prev_year, 'prev_month': prev_month,
         'next_year': next_year, 'next_month': next_month, 'feed_url': feed_url,
+        'undated_count': undated_count,
     })
 
 
@@ -437,13 +444,13 @@ def ics_feed(request, token):
                 f'UID:task-{t.pk}-{uid}@five-nine', f'DTSTAMP:{stamp}', f'DTSTART;VALUE=DATE:{d}',
                 f'SUMMARY:{esc(t.title)} (5-9: {t.minutes}m)',
                 f'DESCRIPTION:{esc(t.get_kind_display())} · energy {t.energy_cost}', 'END:VEVENT']
-    for e in CommunityEvent.objects.all():
+    for e in Event.objects.select_related('community'):
         uid += 1
-        d = e.date.strftime('%Y%m%d')
+        dt = e.starts_at.strftime('%Y%m%dT%H%M%S')
         lines += ['BEGIN:VEVENT',
-            f'UID:event-{e.pk}-{uid}@five-nine', f'DTSTAMP:{stamp}', f'DTSTART;VALUE=DATE:{d}',
+            f'UID:event-{e.pk}-{uid}@five-nine', f'DTSTAMP:{stamp}', f'DTSTART:{dt}',
             f'SUMMARY:{esc(e.title)} [{e.get_kind_display()}]',
-            f'DESCRIPTION:{esc(e.description)}' + (f'\\n{esc(e.location)}' if e.location else ''),
+            f'DESCRIPTION:{esc(e.description)}' + (f'\\n{esc(e.community.name)}' if e.community else ''),
             ('LOCATION:' + esc(e.location)) if e.location and not e.location.startswith('http') else 'TRANSP:TRANSPARENT',
             'END:VEVENT']
     lines.append('END:VCALENDAR')

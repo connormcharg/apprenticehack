@@ -8,6 +8,13 @@
     <a href="?year={{ next_year }}&month={{ next_month }}">Next →</a>
   </p>
 </div>
+{% if undated_count %}
+<form method="post" class="cal-plan">
+  {% csrf_token %}
+  <input type="hidden" name="plan" value="1">
+  <button type="submit" class="btn btn-secondary btn-small">Plan {{ undated_count }} unscheduled task{{ undated_count|pluralize }} into my week</button>
+</form>
+{% endif %}
 <div class="cal-scroll" role="region" aria-label="Month calendar" tabindex="0">
   <div class="cal">
     <div class="cal-head" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
@@ -17,8 +24,8 @@
       <div class="cal-day {% if not d.day %}empty{% endif %} {% if d.is_today %}today{% endif %}">
         {% if d.day %}
         <span class="cal-num">{{ d.day }}{% if d.is_today %}<span class="cal-today-dot" aria-hidden="true"></span><span class="is-hidden"> (today)</span>{% endif %}</span>
-        {% for t in d.tasks %}<a class="cal-task slot-t-{{ t.kind }}" href="{% url 'task_detail' t.pk %}" title="{{ t.title }} · {{ t.minutes }}m">{% if t.start_time %}<span class="cal-time">{{ t.start_time|time:'H:i' }}</span> {% endif %}{{ t.title }}</a>{% endfor %}
-        {% for e in d.events %}<a class="cal-event slot-e-{{ e.kind }}" href="{% url 'event_detail' e.pk %}" title="{{ e.title }}">{{ e.title }}</a>{% endfor %}
+        {% for t in d.tasks %}<div class="cal-task slot-t-{{ t.kind }}"><a class="cal-check {% if t.done %}on{% endif %}" href="{% url 'task_toggle' t.pk %}?next={% url 'calendar' %}" aria-label="{% if t.done %}Reopen{% else %}Mark done{% endif %}: {{ t.title }}"></a><a class="cal-task-title" href="{% url 'task_detail' t.pk %}" title="{{ t.title }} · {{ t.minutes }}m{% if t.goal %} · {{ t.goal.title }}{% endif %}">{% if t.start_time %}<span class="cal-time">{{ t.start_time|time:'H:i' }}</span> {% endif %}{{ t.title }}</a></div>{% endfor %}
+        {% for e in d.events %}<a class="cal-event slot-e-{{ e.kind }}" href="{% url 'communities:detail' e.community_id %}" title="{{ e.title }} · {{ e.community.name }}">{{ e.title }}</a>{% endfor %}
         {% endif %}
       </div>
       {% endfor %}
@@ -26,7 +33,7 @@
     {% endfor %}
   </div>
 </div>
-<p class="page-sub">Tap an item to open it. Add tasks <a href="{% url 'goal_list' %}">here</a>, events <a href="{% url 'event_list' %}">here</a>.</p>
+<p class="page-sub">Tap a task's circle to tick it off, or its name to open it. Add tasks <a href="{% url 'goal_list' %}">here</a>, events <a href="{% url 'communities:list' %}">here</a>.</p>
 {% if feed_url %}
 <div class="card"><h3>Add to Google / Apple Calendar</h3><p class="muted">Use this private link to subscribe.</p><p class="muted">In Google Calendar, choose Add then From URL. In Apple Calendar, choose Add Calendar then Add Subscription.</p><p><small><code>{{ feed_url }}</code></small></p></div>
 {% endif %}
