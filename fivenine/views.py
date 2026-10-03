@@ -115,7 +115,7 @@ def dashboard(request):
     day_events = list(CommunityEvent.objects.filter(date=selected))
     overdue = list(Task.objects.filter(user=user, done=False, due_date__lt=today).order_by('due_date'))
 
-    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'time': '',
+    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'time': '', 'event_id': e.pk,
               'meta': f'{e.get_kind_display()}' + (f' · {e.location}' if e.location else ''),
               'right': e.date.strftime('%a'), 'toggle': None} for e in day_events]
     slots += [{'css': f'slot-t-{t.kind}', 'title': t.title,
@@ -236,6 +236,39 @@ def task_toggle(request, pk):
     return redirect(request.GET.get('next', 'dashboard'))
 
 
+@login_required
+def task_detail(request, pk):
+    """Google-calendar-style detail page: facts + editable notes."""
+    task = get_object_or_404(Task, pk=pk, user=request.user)
+    if request.method == 'POST':
+        if 'toggle' in request.POST:
+            task.done = not task.done
+            task.save()
+            return redirect('task_detail', pk=pk)
+        task.title = request.POST.get('title', task.title).strip() or task.title
+        try:
+            task.minutes = max(5, int(request.POST.get('minutes', task.minutes)))
+        except (TypeError, ValueError):
+            pass
+        task.due_date = request.POST.get('due_date') or None
+        task.start_time = request.POST.get('start_time') or None
+        task.notes = request.POST.get('notes', '')
+        task.save()
+        messages.success(request, 'Saved.')
+        return redirect('task_detail', pk=pk)
+    return render(request, 'fivenine/task_detail.html', {'task': task})
+
+
+@login_required
+def event_detail(request, pk):
+    event = get_object_or_404(CommunityEvent, pk=pk)
+    joined = EventAttendee.objects.filter(event=event, user=request.user).exists()
+    return render(request, 'fivenine/event_detail.html', {
+        'event': event, 'joined': joined,
+        'members': event.attendees.select_related('user'),
+    })
+
+
 def build_plan(user, minutes_available, energy_level):
     """Energy-aware planner, personalised: task_style caps item count."""
     profile = get_profile(user)
@@ -302,13 +335,13 @@ def event_list(request):
 def event_join(request, pk):
     event = get_object_or_404(CommunityEvent, pk=pk)
     EventAttendee.objects.get_or_create(event=event, user=request.user)
-    return redirect('event_list')
+    return redirect(request.GET.get('next', 'event_list'))
 
 
 @login_required
 def event_leave(request, pk):
     EventAttendee.objects.filter(event_id=pk, user=request.user).delete()
-    return redirect('event_list')
+    return redirect(request.GET.get('next', 'event_list'))
 
 
 def recommend_events(user, limit=3):

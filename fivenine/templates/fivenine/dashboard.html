@@ -45,11 +45,11 @@
   <div class="day-items">
     {% for s in slots %}
     {% if s.toggle %}
-    <a class="day-item {{ s.css }}" href="{% url 'task_toggle' s.toggle %}?next=/home/" title="Mark done">
+    <a class="day-item {{ s.css }}" href="{% url 'task_detail' s.toggle %}">
       <time>{{ s.time }}</time><strong>{{ s.title }}</strong><small>{{ s.meta }}</small><span class="slot-right">{{ s.right }}</span>
     </a>
     {% else %}
-    <a class="day-item {{ s.css }}" href="{% url 'event_list' %}">
+    <a class="day-item {{ s.css }}" href="{% url 'event_detail' s.event_id %}">
       <time>{{ s.time }}</time><strong>{{ s.title }}</strong><small>{{ s.meta }}</small><span class="slot-right">{{ s.right }}</span>
     </a>
     {% endif %}

@@ -104,6 +104,15 @@ button:hover, input[type=submit]:hover { filter: brightness(1.05); }
 .day-item time { min-width: 40px; font-size: .76rem; font-weight: 700; color: var(--muted); }
 .day-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .day-item small { margin-left: auto; color: var(--muted); white-space: nowrap; font-size: .76rem; }
+/* Detail pages (Google-calendar-style event view) */
+.detail-title { margin: .2rem 0 1rem; letter-spacing: -0.01em; }
+.facts { display: flex; flex-direction: column; gap: .45rem; margin: 0 0 1rem; }
+.facts > div { display: flex; gap: .8rem; }
+.facts dt { min-width: 70px; font-weight: 700; color: var(--muted); font-size: .85rem; }
+.facts dd { margin: 0; }
+.detail-form textarea { min-height: 90px; resize: vertical; }
+.form-row { display: flex; gap: .6rem; }
+.form-row span { flex: 1; }
 /* Chat */
 .chat-log { display: flex; flex-direction: column; gap: .5rem; max-height: 320px; overflow-y: auto; margin-bottom: .8rem; }
 .chat-log.mini { max-height: 260px; }

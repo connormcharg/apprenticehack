@@ -1,0 +1,32 @@
+{% extends 'fivenine/base.html' %}
+{% block content %}
+<p class="page-sub"><a href="{% url 'dashboard' %}">‹ Home</a> · <a href="{% url 'goal_list' %}">Goals</a></p>
+<div class="card detail">
+  <p><span class="badge">{{ task.get_kind_display }}</span> {% if task.done %}<span class="badge">Done</span>{% endif %}</p>
+  <h1 class="detail-title">{{ task.title }}</h1>
+  <dl class="facts">
+    <div><dt>Length</dt><dd>{{ task.minutes }} min</dd></div>
+    <div><dt>Energy</dt><dd>{{ task.get_energy_cost_display }}</dd></div>
+    {% if task.due_date %}<div><dt>Due</dt><dd>{{ task.due_date|date:'l j M' }}{% if task.start_time %} · {{ task.start_time|time:'H:i' }}{% endif %}</dd></div>{% endif %}
+    {% if task.goal %}<div><dt>Goal</dt><dd>{{ task.goal.title }}</dd></div>{% endif %}
+    {% if task.parent %}<div><dt>Part of</dt><dd><a href="{% url 'task_detail' task.parent.pk %}">{{ task.parent.title }}</a></dd></div>{% endif %}
+  </dl>
+  {% if task.subtasks.all %}
+  <h3>Sub-tasks</h3>
+  {% for s in task.subtasks.all %}
+  <p class="subtask"><strong>{% if s.done %}Done — {% endif %}{{ s.title }}</strong> <small>{{ s.minutes }}m</small> · <a href="{% url 'task_toggle' s.pk %}?next=/tasks/{{ task.pk }}/">{% if s.done %}Reopen{% else %}Done{% endif %}</a></p>
+  {% endfor %}
+  {% endif %}
+  <form method="post" class="detail-form">{% csrf_token %}
+    <p><label>Title</label><input type="text" name="title" value="{{ task.title }}"></p>
+    <p class="form-row">
+      <span><label>Minutes</label><input type="number" name="minutes" value="{{ task.minutes }}" min="5"></span>
+      <span><label>Date</label><input type="date" name="due_date" value="{{ task.due_date|date:'Y-m-d' }}"></span>
+      <span><label>Time</label><input type="time" name="start_time" value="{{ task.start_time|time:'H:i' }}"></span>
+    </p>
+    <p><label>Notes</label><textarea name="notes" rows="4" placeholder="Details, links, anything you need…">{{ task.notes }}</textarea></p>
+    <div class="cta-row"><input type="submit" value="Save"></div>
+  </form>
+  <form method="post">{% csrf_token %}<input type="hidden" name="toggle" value="1"><button type="submit">{% if task.done %}Reopen task{% else %}Mark done{% endif %}</button></form>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'fivenine/base.html' %}
+{% block content %}
+<p class="page-sub"><a href="{% url 'dashboard' %}">‹ Home</a> · <a href="{% url 'event_list' %}">Community</a></p>
+<div class="card detail">
+  <p><span class="badge">{{ event.get_kind_display }}</span>{% if event.topic %} <span class="badge">{{ event.topic }}</span>{% endif %}</p>
+  <h1 class="detail-title">{{ event.title }}</h1>
+  <dl class="facts">
+    <div><dt>Date</dt><dd>{{ event.date|date:'l j M Y' }}</dd></div>
+    {% if event.location %}<div><dt>Where</dt><dd>{{ event.location }}</dd></div>{% endif %}
+    {% if event.description %}<div><dt>About</dt><dd>{{ event.description }}</dd></div>{% endif %}
+  </dl>
+  <h3>{{ event.attendees.count }} going</h3>
+  <p class="muted">{% for a in members %}{{ a.user.username }}{% if not forloop.last %}, {% endif %}{% empty %}Be the first to join.{% endfor %}</p>
+  {% if joined %}
+  <p><a href="{% url 'event_leave' event.pk %}?next=/events/{{ event.pk }}/">Leave this event</a></p>
+  {% else %}
+  <p><a class="cta" href="{% url 'event_join' event.pk %}?next=/events/{{ event.pk }}/">Join this event</a></p>
+  {% endif %}
+</div>
+{% endblock %}

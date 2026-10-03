@@ -9,8 +9,8 @@
     {% for d in week %}
     <div class="cal-day {% if not d.day %}empty{% endif %} {% if d.is_today %}today{% endif %}">
       {% if d.day %}<strong class="cal-num">{{ d.day }}</strong>
-      {% for t in d.tasks %}<a class="cal-task" href="{% url 'goal_list' %}" title="{{ t.title }} · {{ t.minutes }}m">{{ t.title }}</a>{% endfor %}
-      {% for e in d.events %}<a class="cal-event" href="{% url 'event_list' %}" title="{{ e.title }}">{{ e.title }}</a>{% endfor %}
+      {% for t in d.tasks %}<a class="cal-task" href="{% url 'task_detail' t.pk %}" title="{{ t.title }} · {{ t.minutes }}m">{{ t.title }}</a>{% endfor %}
+      {% for e in d.events %}<a class="cal-event" href="{% url 'event_detail' e.pk %}" title="{{ e.title }}">{{ e.title }}</a>{% endfor %}
       {% endif %}
     </div>
     {% endfor %}
