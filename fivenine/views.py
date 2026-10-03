@@ -24,7 +24,7 @@ def service_worker(request):
     return FileResponse(open(path, 'rb'), content_type='application/javascript')
 
 
-# ---------- auth + quiz ----------
+# ---------- auth ----------
 
 def signup(request):
     if request.user.is_authenticated:
@@ -36,12 +36,6 @@ def signup(request):
         messages.success(request, 'Account created! Quick quiz so we can tailor your 5-9.')
         return redirect('onboarding:quiz')
     return render(request, 'fivenine/signup.html', {'form': form})
-
-
-@login_required
-def quiz(request):
-    """The quiz now lives in the onboarding flow — send people there."""
-    return redirect('onboarding:quiz')
 
 
 def needs_quiz(user):

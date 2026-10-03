@@ -86,7 +86,3 @@ class OnboardingQuizTests(TestCase):
         response = self.client.get(reverse("onboarding:welcome"))
         self.assertContains(response, "Your 5-9")
         self.assertContains(response, "Planner")
-
-    def test_fivenine_quiz_redirects_into_onboarding(self):
-        response = self.client.get(reverse("quiz"))
-        self.assertRedirects(response, reverse("onboarding:quiz"))
