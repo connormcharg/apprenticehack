@@ -1,21 +1,30 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
-<h1 class="page-title">{{ month_name }} {{ year }}</h1>
-<p class="page-sub"><a href="?year={{ prev_year }}&month={{ prev_month }}">← Prev</a> · <a href="{% url 'calendar' %}">This month</a> · <a href="?year={{ next_year }}&month={{ next_month }}">Next →</a></p>
-<div class="card cal">
-  <div class="cal-head"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
-  {% for week in weeks %}
-  <div class="cal-week">
-    {% for d in week %}
-    <div class="cal-day {% if not d.day %}empty{% endif %} {% if d.is_today %}today{% endif %}">
-      {% if d.day %}<strong class="cal-num">{{ d.day }}</strong>
-      {% for t in d.tasks %}<a class="cal-task" href="{% url 'task_detail' t.pk %}" title="{{ t.title }} · {{ t.minutes }}m">{{ t.title }}</a>{% endfor %}
-      {% for e in d.events %}<a class="cal-event" href="{% url 'event_detail' e.pk %}" title="{{ e.title }}">{{ e.title }}</a>{% endfor %}
-      {% endif %}
+<div class="cal-nav">
+  <h1 class="page-title">{{ month_name }} {{ year }}</h1>
+  <p class="page-sub cal-links">
+    <a href="?year={{ prev_year }}&month={{ prev_month }}">← Prev</a> ·
+    <a href="{% url 'calendar' %}">This month</a> ·
+    <a href="?year={{ next_year }}&month={{ next_month }}">Next →</a>
+  </p>
+</div>
+<div class="cal-scroll" role="region" aria-label="Month calendar" tabindex="0">
+  <div class="cal">
+    <div class="cal-head" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    {% for week in weeks %}
+    <div class="cal-week">
+      {% for d in week %}
+      <div class="cal-day {% if not d.day %}empty{% endif %} {% if d.is_today %}today{% endif %}">
+        {% if d.day %}
+        <span class="cal-num">{{ d.day }}{% if d.is_today %}<span class="cal-today-dot" aria-hidden="true"></span><span class="is-hidden"> (today)</span>{% endif %}</span>
+        {% for t in d.tasks %}<a class="cal-task slot-t-{{ t.kind }}" href="{% url 'task_detail' t.pk %}" title="{{ t.title }} · {{ t.minutes }}m">{% if t.start_time %}<span class="cal-time">{{ t.start_time|time:'H:i' }}</span> {% endif %}{{ t.title }}</a>{% endfor %}
+        {% for e in d.events %}<a class="cal-event slot-e-{{ e.kind }}" href="{% url 'event_detail' e.pk %}" title="{{ e.title }}">{{ e.title }}</a>{% endfor %}
+        {% endif %}
+      </div>
+      {% endfor %}
     </div>
     {% endfor %}
   </div>
-  {% endfor %}
 </div>
 <p class="page-sub">Tap an item to open it. Add tasks <a href="{% url 'goal_list' %}">here</a>, events <a href="{% url 'event_list' %}">here</a>.</p>
 {% if feed_url %}

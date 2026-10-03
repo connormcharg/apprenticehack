@@ -1,7 +1,9 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
-<h1 class="page-title">Create your account</h1>
-<p class="page-sub">The 5-9 is your time after work and uni. This app helps you use it well. Then a 60-second quiz tailors it to you.</p>
-<div class="card"><form method="post">{% csrf_token %}{{ form.as_p }}<input type="submit" value="Sign up"></form></div>
-<p class="page-sub">Already have one? <a href="{% url 'login' %}">Log in</a></p>
+<div class="auth-wrap">
+  <h1 class="page-title">Create your account</h1>
+  <p class="page-sub">The 5-9 is your time after work and uni. This app helps you use it well. Then a 60-second quiz tailors it to you.</p>
+  <div class="card"><form method="post">{% csrf_token %}{{ form.as_p }}<input type="submit" value="Sign up"></form></div>
+  <p class="page-sub">Already have one? <a href="{% url 'login' %}">Log in</a></p>
+</div>
 {% endblock %}

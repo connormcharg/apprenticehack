@@ -3,15 +3,16 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#eef2ff" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#141718" media="(prefers-color-scheme: dark)">
     <meta name="description" content="Onboarding for apprentices — tell us who you are and what you work with.">
-    <title>{% block title %}ApprenticeHack{% endblock %}</title>
+    <title>{% block title %}5-9 Planner{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'onboarding/css/onboarding.css' %}">
     <script>document.documentElement.classList.add('js');</script>
     {% block extra_head %}{% endblock %}
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
     <div class="page">
       <header class="page__header">
         <a class="brand" href="{% url 'home' %}">
@@ -20,7 +21,7 @@
               <path d="M13.6 2 4.8 13.4h5.3L9.2 22l9.6-11.9h-5.9L13.6 2Z" fill="currentColor"/>
             </svg>
           </span>
-          <span class="brand__name">ApprenticeHack</span>
+          <span class="brand__name">5-9 Planner</span>
         </a>
         {% if user.is_authenticated %}
           <form class="signout" method="post" action="{% url 'onboarding:sign_out' %}">

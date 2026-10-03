@@ -16,32 +16,34 @@
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --bg-a: #eef2ff;
-  --bg-b: #fdf2f8;
-  --bg-c: #ecfeff;
+  /* Shared tokens — keep in sync with fivenine/static/fivenine/style.css:
+     warm off-white, charcoal text, restrained teal accent. */
+  --bg-a: #faf8f3;
+  --bg-b: #f3eee4;
+  --bg-c: #eef4f1;
 
-  --surface: rgba(255, 255, 255, 0.88);
-  --surface-border: rgba(15, 23, 42, 0.09);
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface-border: rgba(35, 40, 44, 0.1);
   --surface-raised: #ffffff;
 
-  --text: #0f172a;
-  --text-muted: #5b6b83;
+  --text: #23282c;
+  --text-muted: #5c666d;
   --on-accent: #ffffff;
 
-  --accent: #4f46e5;
-  --accent-strong: #4338ca;
-  --accent-soft: rgba(79, 70, 229, 0.09);
+  --accent: #0f766e;
+  --accent-strong: #0a5a55;
+  --accent-soft: rgba(15, 118, 110, 0.09);
 
-  --line: #c3cddf;
-  --danger: #dc2626;
-  --danger-soft: rgba(220, 38, 38, 0.08);
+  --line: #cfc7b2;
+  --danger: #b3261e;
+  --danger-soft: rgba(179, 38, 30, 0.08);
 
-  --chip-bg: rgba(79, 70, 229, 0.1);
-  --chip-text: #3730a3;
-  --chip-border: rgba(79, 70, 229, 0.24);
+  --chip-bg: rgba(15, 118, 110, 0.1);
+  --chip-text: #0a5a55;
+  --chip-border: rgba(15, 118, 110, 0.28);
 
-  --shadow-card: 0 30px 60px -30px rgba(15, 23, 42, 0.45),
-    0 2px 8px -2px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 1px 2px rgba(35, 40, 44, 0.06),
+    0 4px 16px rgba(35, 40, 44, 0.08);
 
   --radius-lg: 1.5rem;
   --radius-md: 0.75rem;
@@ -52,32 +54,32 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-a: #0b1020;
-    --bg-b: #1b1030;
-    --bg-c: #06202a;
+    --bg-a: #141718;
+    --bg-b: #191e20;
+    --bg-c: #12211f;
 
-    --surface: rgba(19, 24, 42, 0.82);
-    --surface-border: rgba(148, 163, 184, 0.18);
-    --surface-raised: #1b2340;
+    --surface: rgba(30, 35, 38, 0.9);
+    --surface-border: rgba(200, 210, 210, 0.14);
+    --surface-raised: #242a2e;
 
-    --text: #e6ebf5;
-    --text-muted: #9aa8c0;
-    --on-accent: #10142a;
+    --text: #ebe6db;
+    --text-muted: #a9b2b6;
+    --on-accent: #062926;
 
-    --accent: #a5b4fc;
-    --accent-strong: #c7d2fe;
-    --accent-soft: rgba(165, 180, 252, 0.14);
+    --accent: #63cfc7;
+    --accent-strong: #7fddd5;
+    --accent-soft: rgba(99, 207, 199, 0.14);
 
-    --line: #46536f;
-    --danger: #fca5a5;
-    --danger-soft: rgba(252, 165, 165, 0.13);
+    --line: #3d454b;
+    --danger: #f0a49c;
+    --danger-soft: rgba(240, 164, 156, 0.13);
 
-    --chip-bg: rgba(165, 180, 252, 0.16);
-    --chip-text: #dbe2ff;
-    --chip-border: rgba(165, 180, 252, 0.32);
+    --chip-bg: rgba(99, 207, 199, 0.16);
+    --chip-text: #c8ece9;
+    --chip-border: rgba(99, 207, 199, 0.32);
 
-    --shadow-card: 0 30px 60px -30px rgba(0, 0, 0, 0.85),
-      0 2px 8px -2px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4),
+      0 8px 24px rgba(0, 0, 0, 0.45);
   }
 }
 
@@ -110,6 +112,24 @@ body {
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-page);
+  top: -4rem;
+  z-index: 100;
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
 }
 
 .page__header {
@@ -174,8 +194,8 @@ body {
   width: 2rem;
   height: 2rem;
   border-radius: 0.65rem;
-  background: linear-gradient(135deg, #6366f1, #ec4899);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: var(--on-accent);
 }
 
 .brand__mark svg {
@@ -222,10 +242,8 @@ body {
   padding: clamp(1.25rem, 5vw, 2.75rem);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: var(--surface-raised);
   box-shadow: var(--shadow-card);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .eyebrow {

@@ -1,92 +1,101 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
-<section class="hero-banner">
-  <div>
-    <p class="eyebrow-lite">{{ date_label }}</p>
-    <h1>{{ greeting }}, {{ name }} — your week, without the overwhelm.</h1>
-    <p>Work, washing, cooking, cleaning and rest. Planned around the energy you really have.</p>
-    <div class="cta-row">
-      <a class="btn-light" href="{% url 'calendar' %}">See my week</a>
-      <a class="btn-light" href="{% url 'event_list' %}">Meet people</a>
-    </div>
-  </div>
-  <div class="capacity">
-    <svg width="110" height="110" viewBox="0 0 110 110" role="img" aria-label="Weekly capacity {{ cap_pct }} percent">
-      <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="12"/>
-      <circle cx="55" cy="55" r="44" fill="none" stroke="white" stroke-width="12" stroke-linecap="round"
-        stroke-dasharray="276.5" stroke-dashoffset="{{ ring_off }}" transform="rotate(-90 55 55)"/>
-      <text x="55" y="62" text-anchor="middle" fill="white" font-size="20" font-weight="800">{{ cap_pct }}%</text>
-    </svg>
-    <p><strong>Weekly capacity.</strong> {{ cap_note }}</p>
-  </div>
+<header class="greet">
+  <p class="eyebrow">{{ date_label }}</p>
+  <h1>{{ greeting }}, {{ name }}</h1>
+  <p>Tonight’s plan, shaped around the energy you really have.</p>
+</header>
+
+<section class="cap-strip" aria-label="Weekly capacity">
+  <svg class="cap-ring" width="64" height="64" viewBox="0 0 110 110" role="img" aria-label="Weekly capacity {{ cap_pct }} percent">
+    <circle class="ring-track" cx="55" cy="55" r="44" fill="none" stroke-width="12"/>
+    <circle class="ring-fill" cx="55" cy="55" r="44" fill="none" stroke-width="12" stroke-linecap="round"
+      stroke-dasharray="276.5" stroke-dashoffset="{{ ring_off }}" transform="rotate(-90 55 55)"/>
+    <text x="55" y="62" text-anchor="middle" font-size="20" font-weight="800">{{ cap_pct }}%</text>
+  </svg>
+  <p class="cap-note"><strong>Weekly capacity</strong>{{ cap_note }}</p>
 </section>
 
-<h2 class="section-h">At a glance</h2>
-<div class="grid glance-grid">
+<div class="stat-grid">
   {% for g in glance %}
-  <div class="card glance"><h3>{{ g.label }}</h3><p class="glance-val">{{ g.value }}</p><p class="muted">{{ g.sub }}</p></div>
+  <section class="stat" aria-label="{{ g.label }}">
+    <h3>{{ g.label }}</h3>
+    <p class="stat-val">{{ g.value }}</p>
+    <p class="stat-sub muted">{{ g.sub }}</p>
+  </section>
   {% endfor %}
 </div>
 
-{% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
+{% if warning %}<div class="warning" role="status">{{ warning }}</div>{% endif %}
 
-<section class="card day-view">
-  <div class="day-view-head"><h2>Today</h2><span class="muted">{{ planned }} min planned</span></div>
-  {% if overdue %}
-  <h3 class="day-sub">Overdue</h3>
-  <div class="day-items">
-    {% for t in overdue %}
-    <a class="day-item slot-overdue" href="{% url 'task_toggle' t.pk %}?next=/home/" title="Mark done">
-      <span></span><strong>{{ t.title }}</strong><small>Due {{ t.due_date }} · {{ t.minutes }}m</small>
-    </a>
-    {% endfor %}
-  </div>
-  {% endif %}
-  <div class="day-items">
-    {% for s in slots %}
-    {% if s.toggle %}
-    <a class="day-item {{ s.css }}" href="{% url 'task_detail' s.toggle %}">
-      <time>{{ s.time }}</time><strong>{{ s.title }}</strong><small>{{ s.meta }}</small><span class="slot-right">{{ s.right }}</span>
-    </a>
-    {% else %}
-    <a class="day-item {{ s.css }}" href="{% url 'event_detail' s.event_id %}">
-      <time>{{ s.time }}</time><strong>{{ s.title }}</strong><small>{{ s.meta }}</small><span class="slot-right">{{ s.right }}</span>
-    </a>
+<div class="dash-grid">
+  <section class="card day-view" aria-labelledby="today-heading">
+    <div class="day-view-head"><h2 id="today-heading">Today</h2><span class="muted">{{ planned }} min planned</span></div>
+    {% if overdue %}
+    <h3 class="day-sub">Overdue</h3>
+    <ul class="day-items">
+      {% for t in overdue %}
+      <li>
+        <a class="task-row slot-overdue" href="{% url 'task_toggle' t.pk %}?next=/home/">
+          <span class="task-time" aria-hidden="true"></span>
+          <span class="task-main"><strong>{{ t.title }}</strong><small>Due {{ t.due_date }} · {{ t.minutes }} min</small></span>
+          <span class="task-dur">Mark done</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
     {% endif %}
-    {% empty %}
-    <p class="muted">Nothing scheduled — enjoy the open evening, or tell the + button what to add.</p>
-    {% endfor %}
-  </div>
-  {% if profile %}
-  <p class="muted budget">{{ planned }} min planned of ~{{ profile.minutes_per_evening }} min evening budget · <a href="{% url 'onboarding:quiz' %}">Edit evening budget</a></p>
-  {% endif %}
-</section>
-
-{% if recommendation %}
-<section>
-  <h2 class="section-h">AI recommendation</h2>
-  <div class="card ai-rec">
-    <p><strong>You have a networking opportunity {{ recommendation.event.date|date:'l' }}.</strong><br>
-    <span class="muted">{{ recommendation.reason }}: {{ recommendation.event.title }}, {{ recommendation.event.date|date:'j M' }}{% if recommendation.event.location %} · {{ recommendation.event.location }}{% endif %}.</span></p>
-    <p><a class="cta" href="{% url 'event_list' %}">See the event</a></p>
-  </div>
-</section>
-{% endif %}
-
-<section class="grid">
-  <div class="card">
-    <h3>Energy check-in</h3>
-    <form method="post" class="energy-form">{% csrf_token %}{{ eform.as_p }}<input type="submit" value="Log"></form>
-    {% if recent_energy %}<p class="muted">Recent: {% for e in recent_energy %}{{ e.level }}/5 ({{ e.date|date:'D' }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
-  </div>
-  <div class="card">
-    <h3>Evening budget</h3>
+    <ul class="day-items">
+      {% for s in slots %}
+      <li>
+        {% if s.toggle %}
+        <a class="task-row {{ s.css }}" href="{% url 'task_detail' s.toggle %}">
+          <span class="task-time">{{ s.time }}</span>
+          <span class="task-main"><strong>{{ s.title }}</strong><small>{{ s.meta }}</small></span>
+          <span class="task-dur">{{ s.right }}</span>
+        </a>
+        {% else %}
+        <a class="task-row {{ s.css }}" href="{% url 'event_detail' s.event_id %}">
+          <span class="task-time">{{ s.time }}</span>
+          <span class="task-main"><strong>{{ s.title }}</strong><small>{{ s.meta }}</small></span>
+          <span class="task-dur">{{ s.right }}</span>
+        </a>
+        {% endif %}
+      </li>
+      {% empty %}
+      <li><p class="muted">Nothing scheduled — enjoy the open evening, or tell the + button what to add.</p></li>
+      {% endfor %}
+    </ul>
     {% if profile %}
-    <p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} evenings a week × {{ profile.minutes_per_evening }} min</span></p>
-    <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'onboarding:quiz' %}">edit evenings</a></p>
-    {% else %}
-    <p><a href="{% url 'onboarding:quiz' %}">Shape your evenings</a> to personalise your plan.</p>
+    <p class="muted budget-line">{{ planned }} min planned of ~{{ profile.minutes_per_evening }} min evening budget · <a href="{% url 'onboarding:quiz' %}">Edit evening budget</a></p>
+    {% endif %}
+  </section>
+
+  <div>
+    <section class="card" aria-labelledby="energy-heading">
+      <h3 id="energy-heading">Energy check-in</h3>
+      <form method="post" class="energy-form">{% csrf_token %}{{ eform.as_p }}<input type="submit" value="Log"></form>
+      {% if recent_energy %}<p class="muted">Recent: {% for e in recent_energy %}{{ e.level }}/5 ({{ e.date|date:'D' }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="budget-heading">
+      <h3 id="budget-heading">Evening budget</h3>
+      {% if profile %}
+      <p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} evenings a week × {{ profile.minutes_per_evening }} min</span></p>
+      <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'onboarding:quiz' %}">edit evenings</a></p>
+      {% else %}
+      <p><a href="{% url 'onboarding:quiz' %}">Shape your evenings</a> to personalise your plan.</p>
+      {% endif %}
+    </section>
+
+    {% if recommendation %}
+    <section class="card" aria-labelledby="rec-heading">
+      <h3 id="rec-heading">Recommended</h3>
+      <p><strong>{{ recommendation.event.title }}</strong><br>
+      <span class="muted">{{ recommendation.reason }} · {{ recommendation.event.date|date:'l j M' }}{% if recommendation.event.location %} · {{ recommendation.event.location }}{% endif %}</span></p>
+      <p><a class="btn btn-secondary btn-small" href="{% url 'event_list' %}">See the event</a></p>
+    </section>
     {% endif %}
   </div>
-</section>
+</div>
 {% endblock %}

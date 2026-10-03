@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{% block title %}5-9 Planner — life after work{% endblock %}</title>
 <meta name="description" content="A 5-9 life planner for apprentices: goals, household, study and rest without burnout.">
-<meta name="theme-color" content="#eef2ff">
+<meta name="theme-color" content="#faf8f3">
 {% load static %}
 <link rel="stylesheet" href="{% static 'fivenine/style.css' %}">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
@@ -16,48 +16,61 @@
 <link rel="apple-touch-icon" href="{% static 'fivenine/icons/icon-192.png' %}">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="5-9 Planner">
 </head>
 <body>
-<header class="topbar">
-  <div class="topbar-inner">
+<a class="skip-link" href="#main">Skip to main content</a>
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="{% url 'dashboard' %}"><span class="brand-mark" aria-hidden="true">5–9</span> 5-9 Planner</a>
     {% if user.is_authenticated %}
-    <button id="nav-toggle" class="icon-btn" aria-label="Open menu"><i class="ph-bold ph-list"></i></button>
-    {% endif %}
-    <a class="logo" href="{% url 'dashboard' %}">5-9</a>
-    <div class="topbar-actions">
-      {% if user.is_authenticated %}
-      <button class="ask-btn" type="button" onclick="document.getElementById('chat-fab').click()"><i class="ph-bold ph-sparkle"></i> Ask AI</button>
-      <button class="icon-btn" type="button" aria-label="Log out" title="Log out" onclick="document.getElementById('logout-form').submit()"><i class="ph-bold ph-sign-out"></i></button>
-      {% else %}
-      <a class="top-link" href="{% url 'login' %}">Log in</a>
-      <a class="top-link" href="{% url 'signup' %}">Sign up</a>
-      {% endif %}
+    <nav aria-label="Primary">
+      {% include 'fivenine/_nav_links.html' %}
+    </nav>
+    <div class="sidebar-foot">
+      <p class="account muted"><small>Signed in as<br><strong>{{ display_name|default:user.username }}</strong></small></p>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn-secondary btn-small" type="submit">Log out</button></form>
     </div>
+    {% endif %}
+  </aside>
+  <div class="app-main">
+    <header class="topbar">
+      <div class="topbar-inner">
+        {% if user.is_authenticated %}
+        <button id="nav-toggle" class="icon-btn" aria-label="Open menu" aria-expanded="false" aria-controls="nav-drawer"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        {% endif %}
+        <a class="brand brand-mobile" href="{% url 'dashboard' %}"><span class="brand-mark" aria-hidden="true">5–9</span> 5-9 Planner</a>
+        <div class="topbar-actions">
+          {% if user.is_authenticated %}
+          <button class="ask-btn" type="button" onclick="document.getElementById('chat-fab').click()"><i class="ph-bold ph-sparkle" aria-hidden="true"></i> Ask AI</button>
+          <button class="icon-btn" type="button" aria-label="Log out" title="Log out" onclick="document.getElementById('logout-form').submit()"><i class="ph-bold ph-sign-out" aria-hidden="true"></i></button>
+          {% else %}
+          <a class="top-link" href="{% url 'login' %}">Log in</a>
+          <a class="top-link" href="{% url 'signup' %}">Sign up</a>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+    <main id="main" class="wrap">
+    {% block content %}{% endblock %}
+    </main>
   </div>
-</header>
+</div>
 {% if user.is_authenticated %}
-<nav id="nav-drawer" aria-label="Main menu">
-  <div class="drawer-head"><span>5-9</span><button id="nav-close" class="icon-btn" aria-label="Close menu"><i class="ph-bold ph-x"></i></button></div>
-  <a href="{% url 'dashboard' %}"><i class="ph-bold ph-house"></i> Home</a>
-  <a href="{% url 'goal_list' %}"><i class="ph-bold ph-target"></i> Goals</a>
-  <a href="{% url 'household' %}"><i class="ph-bold ph-broom"></i> Household</a>
-  <a href="{% url 'event_list' %}"><i class="ph-bold ph-users"></i> Community</a>
-  <a href="{% url 'calendar' %}"><i class="ph-bold ph-calendar"></i> Calendar</a>
+<nav id="nav-drawer" aria-label="Main menu" aria-hidden="true" inert>
+  <div class="drawer-head"><span>Menu</span><button id="nav-close" class="icon-btn" aria-label="Close menu"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+  {% include 'fivenine/_nav_links.html' %}
   <div class="drawer-foot"><small>Signed in as {{ display_name|default:user.username }}</small></div>
 </nav>
 <div id="nav-scrim" hidden></div>
 {% endif %}
-<form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none">{% csrf_token %}</form>
-<main class="wrap">
-{% block content %}{% endblock %}
-</main>
-<button id="chat-fab" aria-label="Quick add"><i class="ph-bold ph-plus"></i></button>
+<form id="logout-form" class="is-hidden" method="post" action="{% url 'logout' %}">{% csrf_token %}</form>
+<button id="chat-fab" aria-label="Quick add" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i></button>
 <div id="chat-panel" hidden>
-  <div class="chat-panel-head"><strong>Quick add</strong><button id="chat-close" class="icon-btn dark" aria-label="Close"><i class="ph-bold ph-x"></i></button></div>
-  <div id="chat-mini-log" class="chat-log mini"></div>
-  <form id="chat-mini-form" class="chat-form"><input id="chat-mini-input" type="text" placeholder="Try: tennis tomorrow 6:30" autocomplete="off"><button type="submit" aria-label="Send"><i class="ph-bold ph-paper-plane-tilt"></i></button></form>
+  <div class="chat-panel-head"><strong>Quick add</strong><button id="chat-close" class="icon-btn dark" aria-label="Close"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+  <div id="chat-mini-log" class="chat-log mini" role="log" aria-live="polite" aria-label="Assistant messages"></div>
+  <form id="chat-mini-form" class="chat-form"><input id="chat-mini-input" type="text" placeholder="Try: tennis tomorrow 6:30" autocomplete="off" aria-label="Message the assistant"><button class="icon-btn" type="submit" aria-label="Send"><i class="ph-bold ph-paper-plane-tilt" aria-hidden="true"></i></button></form>
 </div>
 {% if user.is_authenticated %}
 <script>
@@ -66,16 +79,37 @@
   const drawer = document.getElementById('nav-drawer');
   const scrim = document.getElementById('nav-scrim');
   const closeBtn = document.getElementById('nav-close');
-  if (toggle && drawer) {
-    const close = () => { drawer.classList.remove('open'); if (scrim) scrim.hidden = true; };
-    toggle.addEventListener('click', () => {
-      const open = drawer.classList.toggle('open');
-      if (scrim) scrim.hidden = !open;
-    });
-    if (closeBtn) closeBtn.addEventListener('click', close);
-    if (scrim) scrim.addEventListener('click', close);
-    drawer.querySelectorAll('a').forEach((a) => a.addEventListener('click', close));
+  if (!toggle || !drawer) return;
+  let lastFocus = null;
+  function open() {
+    lastFocus = document.activeElement;
+    drawer.classList.add('open');
+    drawer.removeAttribute('aria-hidden');
+    drawer.removeAttribute('inert');
+    if (scrim) scrim.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    // Wait a frame: the visibility transition still reports hidden synchronously.
+    const target = closeBtn || drawer.querySelector('a');
+    requestAnimationFrame(() => requestAnimationFrame(() => target.focus({ preventScroll: true })));
   }
+  function close(returnFocus) {
+    if (!drawer.classList.contains('open')) return;
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    drawer.setAttribute('inert', '');
+    if (scrim) scrim.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    if (returnFocus !== false && lastFocus) lastFocus.focus();
+  }
+  toggle.addEventListener('click', () => {
+    if (drawer.classList.contains('open')) { close(); } else { open(); }
+  });
+  if (closeBtn) closeBtn.addEventListener('click', () => close());
+  if (scrim) scrim.addEventListener('click', () => close());
+  drawer.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => close(false)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
 })();
 </script>
 {% endif %}
@@ -116,6 +150,7 @@ window.renderChatMarkdown = function (src) {
   let greeted = false;
   fab.addEventListener('click', () => {
     panel.hidden = !panel.hidden;
+    fab.setAttribute('aria-expanded', String(!panel.hidden));
     if (!panel.hidden && !greeted) {
       greeted = true;
       const d = document.createElement('div');
@@ -123,8 +158,12 @@ window.renderChatMarkdown = function (src) {
       d.textContent = 'Tell me anything — tennis tomorrow 6:30, or a goal like: run a 5k.';
       log.appendChild(d);
     }
+    if (!panel.hidden) input.focus();
   });
-  close.addEventListener('click', () => { panel.hidden = true; });
+  close.addEventListener('click', () => { panel.hidden = true; fab.setAttribute('aria-expanded', 'false'); fab.focus(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !panel.hidden) { panel.hidden = true; fab.setAttribute('aria-expanded', 'false'); }
+  });
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const v = input.value.trim();

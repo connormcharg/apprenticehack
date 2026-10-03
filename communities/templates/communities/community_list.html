@@ -11,8 +11,8 @@
 {% endif %}
 
 {% if recommended %}
-<div class="card">
-  <h3>Recommended for you</h3>
+<section class="card" aria-labelledby="comm-rec-heading">
+  <h3 id="comm-rec-heading">Recommended for you</h3>
   {% for community, reasons in recommended %}
   <p>
     <strong><a href="{% url 'communities:detail' community.pk %}">{{ community.name }}</a></strong>
@@ -20,11 +20,11 @@
     <small>{% if community.location %}{{ community.location }}{% endif %}{% if community.company %} · {{ community.company }}{% endif %}</small>
   </p>
   {% endfor %}
-</div>
+</section>
 {% endif %}
 
-<div class="card">
-  <h3>Filter</h3>
+<details class="filter-details" id="community-filters">
+  <summary>Filter{% if filters.q or filters.company or filters.city or filters.country or filters.technology or filters.scope %}<span class="filter-dot" aria-hidden="true"></span><span class="is-hidden"> (active)</span>{% endif %}</summary>
   <form method="get">
     <label for="filter-q">Search</label>
     <input id="filter-q" type="search" name="q" value="{{ filters.q }}" placeholder="Name or description">
@@ -64,30 +64,39 @@
     {% if filters.scope %}<input type="hidden" name="scope" value="{{ filters.scope }}">{% endif %}
     <input type="submit" value="Apply filters">
   </form>
-</div>
+</details>
+<script>
+(function () {
+  var filters = document.getElementById('community-filters');
+  if (filters && window.matchMedia && window.matchMedia('(min-width: 56rem)').matches) {
+    filters.open = true;
+  }
+})();
+</script>
 
-<p>
-  <a class="badge" href="{% url 'communities:list' %}" {% if not filters.scope %}style="background:#4f46e5;color:white"{% endif %}>All</a>
-  <a class="badge" href="?scope=joined" {% if filters.scope == 'joined' %}style="background:#4f46e5;color:white"{% endif %}>Joined</a>
-  <a class="badge" href="?scope=mine" {% if filters.scope == 'mine' %}style="background:#4f46e5;color:white"{% endif %}>Created by me</a>
-</p>
+<nav class="seg" aria-label="Show communities">
+  <a href="{% url 'communities:list' %}"{% if not filters.scope %} class="is-active" aria-current="true"{% endif %}>All</a>
+  <a href="?scope=joined"{% if filters.scope == 'joined' %} class="is-active" aria-current="true"{% endif %}>Joined</a>
+  <a href="?scope=mine"{% if filters.scope == 'mine' %} class="is-active" aria-current="true"{% endif %}>Created by me</a>
+</nav>
 
 {% for community in communities %}
-<div class="card">
-  <p>
-    <strong><a href="{% url 'communities:detail' community.pk %}">{{ community.name }}</a></strong>
-    {% if community.company %}<span class="badge">{{ community.company }}</span>{% endif %}
-    {% if community.location %}<span class="badge">{{ community.location }}</span>{% endif %}
-    <br>
-    {% if community.description %}{{ community.description }}<br>{% endif %}
-    <small>{{ community.member_count }} member{{ community.member_count|pluralize }}{% if community.technologies.all %} · {% for tech in community.technologies.all %}{{ tech.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</small>
-  </p>
-  {% if community.pk in my_ids %}
-    <a href="{% url 'communities:detail' community.pk %}">Open</a>
-  {% else %}
-    <form method="post" action="{% url 'communities:join' community.pk %}">{% csrf_token %}<input type="submit" value="Join"></form>
-  {% endif %}
-</div>
+<article class="card event-card">
+  <div class="event-body">
+    <h3><a href="{% url 'communities:detail' community.pk %}">{{ community.name }}</a></h3>
+    <p class="event-meta muted">
+      {% if community.company %}{{ community.company }} · {% endif %}{% if community.location %}{{ community.location }} · {% endif %}{{ community.member_count }} member{{ community.member_count|pluralize }}{% if community.technologies.all %} · {% for tech in community.technologies.all %}{{ tech.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+    </p>
+    {% if community.description %}<p>{{ community.description }}</p>{% endif %}
+    <div class="event-actions">
+      {% if community.pk in my_ids %}
+        <a href="{% url 'communities:detail' community.pk %}">Open</a>
+      {% else %}
+        <form method="post" action="{% url 'communities:join' community.pk %}">{% csrf_token %}<input type="submit" value="Join"></form>
+      {% endif %}
+    </div>
+  </div>
+</article>
 {% empty %}
 <div class="card"><p class="muted">No communities match those filters yet. Try clearing them, or create one.</p></div>
 {% endfor %}

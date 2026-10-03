@@ -1,24 +1,19 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
-<div class="page-head">
-  <h1 class="page-title">Goals &amp; growth</h1>
-  <a class="cta" href="#add">+ Add plan</a>
-</div>
-<p class="eyebrow-lite">Career + life</p>
-<h2 class="goals-title">Goals</h2>
+<h1 class="page-title">Goals</h1>
 <p class="page-sub">Your AI turns big goals into small steps that fit your week.</p>
 
 <div class="grid goal-grid">
   {% for c in cards %}
-  <div class="card goal-card">
-    <p class="eyebrow-lite">{{ c.goal.get_category_display }}</p>
+  <section class="card" aria-label="{{ c.goal.title }}">
+    <p class="eyebrow">{{ c.goal.get_category_display }}</p>
     <h3>{{ c.goal.title }}</h3>
-    <p class="goal-stat">{{ c.pct }}%</p>
-    <div class="bar"><div class="fill" style="width:{{ c.pct }}%"></div></div>
+    <p class="goal-stat" aria-label="{{ c.pct }} percent complete">{{ c.pct }}%</p>
+    <div class="bar" role="progressbar" aria-valuenow="{{ c.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progress for {{ c.goal.title }}"><div class="fill" style="width:{{ c.pct }}%"></div></div>
     <p class="muted">{{ c.done }} of {{ c.total }} steps{% if c.goal.target_date %} · by {{ c.goal.target_date|date:'j M' }}{% endif %}</p>
     {% if c.steps %}<p class="muted">Next: {{ c.steps.0.title }}</p>{% endif %}
     <p><a href="{% url 'goal_toggle' c.goal.pk %}">{% if c.goal.done %}Reopen{% else %}Mark done{% endif %}</a></p>
-  </div>
+  </section>
   {% empty %}
   <div class="card"><p class="muted">No goals yet — add one below, or tell the + button your goal.</p></div>
   {% endfor %}
@@ -29,7 +24,7 @@
 <div class="card actions-card">
   {% for t in week_actions %}
   <div class="action-row">
-    <a class="check {% if t.done %}on{% endif %}" href="{% url 'task_toggle' t.pk %}?next=/goals/" aria-label="Toggle done"></a>
+    <a class="check {% if t.done %}on{% endif %}" href="{% url 'task_toggle' t.pk %}?next=/goals/" aria-label="{% if t.done %}Reopen{% else %}Mark done{% endif %}: {{ t.title }}"></a>
     <a class="action-main" href="{% url 'task_detail' t.pk %}">
       <strong>{{ t.title }}</strong>
       <small>{{ t.get_kind_display }} · {{ t.minutes }} min{% if t.goal %} · {{ t.goal.title }}{% endif %}</small>
@@ -41,14 +36,21 @@
   {% endfor %}
 </div>
 
-<div class="grid" id="add">
-<div class="card"><h3>Add a goal</h3><form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="goal">{{ goal_form.as_p }}<input type="submit" value="Add goal"></form></div>
-<div class="card"><h3>Add a task</h3><form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="task">{{ task_form.as_p }}<input type="submit" value="Add task"></form></div>
-</div>
+<section id="add" aria-label="Add goals and tasks">
+  <h2 class="section-h">Add something new</h2>
+  <details class="disclosure"{% if goal_form.errors %} open{% endif %}>
+    <summary>Add a goal</summary>
+    <form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="goal">{{ goal_form.as_p }}<input type="submit" value="Add goal"></form>
+  </details>
+  <details class="disclosure"{% if task_form.errors %} open{% endif %}>
+    <summary>Add a task</summary>
+    <form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="task">{{ task_form.as_p }}<input type="submit" value="Add task"></form>
+  </details>
+</section>
 
 <h2 class="section-h">All tasks</h2>
 {% for t in top_tasks %}
-<div class="card task-row">
+<div class="card task-row-card">
   <p><span class="badge">{{ t.get_kind_display }} · {{ t.minutes }}m · {{ t.energy_label }} energy</span><br>
   <strong>{% if t.done %}Done — {% endif %}{{ t.title }}</strong>{% if t.goal %} <small>· {{ t.goal.title }}</small>{% endif %}{% if t.due_date %} <small>· due {{ t.due_date }}</small>{% endif %}{% if t.start_time %} <small>· {{ t.start_time|time:'H:i' }}</small>{% endif %}<br>
   <a href="{% url 'task_detail' t.pk %}">Details</a> · <a href="{% url 'task_toggle' t.pk %}?next=/goals/">{% if t.done %}Reopen{% else %}Done{% endif %}</a></p>

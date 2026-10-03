@@ -1,16 +1,18 @@
 {% extends 'fivenine/base.html' %}
 {% block title %}Add an event · {{ community.name }}{% endblock %}
 {% block content %}
-<h1 class="page-title">Add an event</h1>
-<p class="page-sub">Organise a meet-up for {{ community.name }}.</p>
+<div class="auth-wrap">
+  <h1 class="page-title">Add an event</h1>
+  <p class="page-sub">Organise a meet-up for {{ community.name }}.</p>
 
-<div class="card">
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Add event">
-  </form>
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="submit" value="Add event">
+    </form>
+  </div>
+
+  <p><a href="{% url 'communities:detail' community.pk %}">Back to {{ community.name }}</a></p>
 </div>
-
-<p><a href="{% url 'communities:detail' community.pk %}">Back to {{ community.name }}</a></p>
 {% endblock %}
