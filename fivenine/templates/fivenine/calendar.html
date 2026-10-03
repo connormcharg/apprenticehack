@@ -8,17 +8,17 @@
   <div class="cal-week">
     {% for d in week %}
     <div class="cal-day {% if not d.day %}empty{% endif %} {% if d.is_today %}today{% endif %}">
-      {% if d.day %}<strong>{{ d.day }}</strong>
-      {% for t in d.tasks %}<div class="cal-task">{{ t.title }}</div>{% endfor %}
-      {% for e in d.events %}<div class="cal-event">{{ e.title }}</div>{% endfor %}
+      {% if d.day %}<strong class="cal-num">{{ d.day }}</strong>
+      {% for t in d.tasks %}<a class="cal-task" href="{% url 'task_detail' t.pk %}" title="{{ t.title }} · {{ t.minutes }}m">{{ t.title }}</a>{% endfor %}
+      {% for e in d.events %}<a class="cal-event" href="{% url 'event_detail' e.pk %}" title="{{ e.title }}">{{ e.title }}</a>{% endfor %}
       {% endif %}
     </div>
     {% endfor %}
   </div>
   {% endfor %}
 </div>
-<p class="page-sub">Tasks appear on their due date · events on their date. Add tasks <a href="{% url 'goal_list' %}">here</a>, events <a href="{% url 'event_list' %}">here</a>.</p>
+<p class="page-sub">Tap an item to open it. Add tasks <a href="{% url 'goal_list' %}">here</a>, events <a href="{% url 'event_list' %}">here</a>.</p>
 {% if feed_url %}
-<div class="card"><h3>Add to Google / Apple Calendar</h3><p class="muted">Subscribe with this secret link (works in Google Calendar → Add → From URL, or Apple Calendar → Add Calendar → Add Subscription):</p><p><small><code>{{ feed_url }}</code></small></p></div>
+<div class="card"><h3>Add to Google / Apple Calendar</h3><p class="muted">Subscribe with this secret link (works in Google Calendar → Add → From URL, or Apple Calendar → Add Subscription):</p><p><small><code>{{ feed_url }}</code></small></p></div>
 {% endif %}
 {% endblock %}

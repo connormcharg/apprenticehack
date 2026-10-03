@@ -9,6 +9,30 @@ class SignupForm(UserCreationForm):
         fields = ('username',)
 
 
+class EveningsForm(forms.ModelForm):
+    """Step 3 of onboarding: how the 5-9 should work.
+    Company/location/skills come from the onboarding profile, not asked twice."""
+    weekly_tasks = forms.CharField(
+        required=False, widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'e.g. food shop\nlaundry\nclean bathroom'}),
+        help_text='One per line — each becomes a household task.')
+    first_goal = forms.CharField(
+        required=False, max_length=200,
+        widget=forms.TextInput(attrs={'placeholder': 'e.g. Run a 5k'}),
+        help_text='Your headline goal for the next few weeks.')
+    first_goal_category = forms.ChoiceField(choices=Goal.CATEGORIES, initial='career', required=False)
+
+    class Meta:
+        model = UserProfile
+        fields = ['person_type', 'chronotype', 'evenings_per_week', 'minutes_per_evening',
+                  'social_balance', 'task_style']
+        widgets = {
+            'person_type': forms.RadioSelect,
+            'chronotype': forms.RadioSelect,
+            'social_balance': forms.RadioSelect,
+            'task_style': forms.RadioSelect,
+        }
+
+
 class GoalForm(forms.ModelForm):
     class Meta:
         model = Goal

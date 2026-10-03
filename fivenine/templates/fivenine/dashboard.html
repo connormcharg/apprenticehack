@@ -14,7 +14,7 @@
   <div>
     <p class="eyebrow-lite">{{ date_label }}</p>
     <h1>{{ greeting }}, {{ name }} — your week, without the overwhelm.</h1>
-    <p>Work, university, life and career growth — planned around your actual capacity, not just empty calendar slots.</p>
+    <p>Work, uni, washing, cooking, cleaning and career growth — planned around your actual capacity, not just empty calendar slots.</p>
     <div class="cta-row">
       <a class="btn-light" href="{% url 'calendar' %}">View my week</a>
       <a class="btn-light" href="{% url 'event_list' %}">Find networking</a>
@@ -40,46 +40,29 @@
 
 {% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
 
-<section class="card day-card">
-  <div class="week-head">
-    <h2>{% if selected == today %}Today{% else %}{{ selected|date:'l j M' }}{% endif %}</h2>
-    <div class="week-nav">
-      <a href="?day={{ prev_week }}" aria-label="Previous week">‹</a>
-      <a href="?day={{ next_week }}" aria-label="Next week">›</a>
-    </div>
-  </div>
-  <div class="week-strip">
-    {% for d in week_days %}
-    <a class="week-day {% if d == selected %}selected{% endif %} {% if d == today %}is-today{% endif %}" href="?day={{ d|date:'Y-m-d' }}">
-      <span>{{ d|date:'D' }}</span><strong>{{ d.day }}</strong>
+<section class="card day-view">
+  <div class="day-view-head"><h2>Today</h2><span class="muted">{{ planned }} min planned</span></div>
+  {% if overdue %}
+  <h3 class="day-sub">Overdue</h3>
+  <div class="day-items">
+    {% for t in overdue %}
+    <a class="day-item slot-overdue" href="{% url 'task_toggle' t.pk %}?next=/home/" title="Mark done">
+      <span></span><strong>{{ t.title }}</strong><small>Due {{ t.due_date }} · {{ t.minutes }}m</small>
     </a>
     {% endfor %}
   </div>
-  <div class="day-nav">
-    <a href="?day={{ prev_day }}">‹ Prev day</a>
-    <a href="?day={{ today|date:'Y-m-d' }}">Today</a>
-    <a href="?day={{ next_day }}">Next day ›</a>
-  </div>
-  {% if overdue %}
-  <div class="overdue">
-    <h3>Overdue</h3>
-    {% for t in overdue %}
-    <div class="slot slot-overdue">
-      <span class="slot-time"></span>
-      <div class="slot-main"><strong>{{ t.title }}</strong><small>Due {{ t.due_date }} · {{ t.minutes }} min</small></div>
-      <a class="slot-done" href="{% url 'task_toggle' t.pk %}?next=/home/?day={{ selected|date:'Y-m-d' }}">Done</a>
-    </div>
-    {% endfor %}
-  </div>
   {% endif %}
-  <div class="slots">
+  <div class="day-items">
     {% for s in slots %}
-    <div class="slot {{ s.css }}">
-      <span class="slot-time">{{ s.time }}</span>
-      <div class="slot-main"><strong>{{ s.title }}</strong><small>{{ s.meta }}</small></div>
-      <span class="slot-right">{{ s.right }}</span>
-      {% if s.toggle %}<a class="slot-done" href="{% url 'task_toggle' s.toggle %}?next=/home/?day={{ selected|date:'Y-m-d' }}">Done</a>{% endif %}
-    </div>
+    {% if s.toggle %}
+    <a class="day-item {{ s.css }}" href="{% url 'task_detail' s.toggle %}">
+      <time>{{ s.time }}</time><strong>{{ s.title }}</strong><small>{{ s.meta }}</small><span class="slot-right">{{ s.right }}</span>
+    </a>
+    {% else %}
+    <a class="day-item {{ s.css }}" href="{% url 'event_detail' s.event_id %}">
+      <time>{{ s.time }}</time><strong>{{ s.title }}</strong><small>{{ s.meta }}</small><span class="slot-right">{{ s.right }}</span>
+    </a>
+    {% endif %}
     {% empty %}
     <p class="muted">Nothing scheduled — enjoy the open evening, or tell the + button what to add.</p>
     {% endfor %}
@@ -110,9 +93,9 @@
     <h3>Evening budget</h3>
     {% if profile %}
     <p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} eve/wk × {{ profile.minutes_per_evening }}m</span></p>
-    <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'onboarding:quiz' %}">retake quiz</a></p>
+    <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'onboarding:evenings' %}">edit evenings</a></p>
     {% else %}
-    <p><a href="{% url 'onboarding:quiz' %}">Take the quiz</a> to personalise your plan.</p>
+    <p><a href="{% url 'onboarding:evenings' %}">Shape your evenings</a> to personalise your plan.</p>
     {% endif %}
   </div>
 </section>

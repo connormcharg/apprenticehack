@@ -1,0 +1,44 @@
+{% extends 'fivenine/base.html' %}
+{% block content %}
+<div class="page-head">
+  <h1 class="page-title">Household</h1>
+  <a class="cta" href="{% url 'goal_list' %}">+ Add task</a>
+</div>
+<p class="eyebrow-lite">Washing · cooking · cleaning</p>
+<h2 class="goals-title">Home, handled</h2>
+<p class="page-sub">Washing, cooking, cleaning and life admin — planned into your evenings before they pile up.</p>
+
+{% if suggestions %}
+<div class="card"><h3>Recommended for you</h3>
+  {% for s in suggestions %}
+  <div class="action-row">
+    <div class="action-main"><strong>{{ s.title }}</strong><small>{{ s.minutes }} min · energy {{ s.energy }} — {{ s.reason }}</small></div>
+    <form method="post" style="margin:0">{% csrf_token %}<input type="hidden" name="add" value="{{ s.key }}"><button type="submit">Add</button></form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if undated_count %}
+<div class="card"><h3>Plan my week</h3>
+  <p class="muted">{{ undated_count }} chore{{ undated_count|pluralize }} with no day yet. Spread them across your evenings in one tap.</p>
+  <form method="post">{% csrf_token %}<input type="hidden" name="plan" value="1"><input type="submit" value="Spread across my evenings"></form>
+</div>
+{% endif %}
+
+<h2 class="section-h">Chores</h2>
+<div class="card actions-card">
+  {% for t in chores %}
+  <div class="action-row">
+    <a class="check {% if t.done %}on{% endif %}" href="{% url 'task_toggle' t.pk %}?next=/household/" aria-label="Toggle done"></a>
+    <a class="action-main" href="{% url 'task_detail' t.pk %}">
+      <strong>{% if t.done %}Done — {% endif %}{{ t.title }}</strong>
+      <small>{{ t.minutes }} min · energy {{ t.energy_cost }}{% if t.due_date %} · due {{ t.due_date|date:'D j M' }}{% else %} · no day yet{% endif %}</small>
+    </a>
+    <span class="muted">{% if t.due_date %}{{ t.due_date|date:'D' }}{% endif %}</span>
+  </div>
+  {% empty %}
+  <p class="muted">No household tasks yet — add a suggestion above, or tell the + button (e.g. "laundry every Sunday").</p>
+  {% endfor %}
+</div>
+{% endblock %}

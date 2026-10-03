@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from .forms import EnergyForm, EventForm, GoalForm, PlanForm, SignupForm, TaskForm
-from .models import CommunityEvent, EnergyLog, EventAttendee, Goal, Task, UserProfile
+from .models import CommunityEvent, EnergyLog, EventAttendee, Goal, Task, UserProfile, display_name_for
 
 
 def manifest(request):
@@ -76,11 +76,7 @@ def dashboard(request):
         return redirect('onboarding:quiz')
     user = request.user
     today = timezone.now().date()
-    day_param = request.GET.get('day', '')
-    try:
-        selected = _date.fromisoformat(day_param) if day_param else today
-    except ValueError:
-        selected = today
+    selected = today
 
     if request.method == 'POST':
         eform = EnergyForm(request.POST)
@@ -89,20 +85,19 @@ def dashboard(request):
             entry.user = user
             entry.save()
             messages.success(request, 'Energy logged.')
-            return redirect(f'/home/?day={selected.isoformat()}')
+            return redirect('/home/')
     else:
         eform = EnergyForm(initial={'date': today, 'level': 3})
 
     hour = timezone.now().hour
     greeting = 'Good morning' if hour < 12 else 'Good afternoon' if hour < 18 else 'Good evening'
     monday = selected - _td(days=selected.weekday())
-    week_days = [monday + _td(days=i) for i in range(7)]
 
     day_tasks = list(Task.objects.filter(user=user, done=False, due_date=selected).order_by('energy_cost'))
     day_events = list(CommunityEvent.objects.filter(date=selected))
-    overdue = list(Task.objects.filter(user=user, done=False, due_date__lt=today).order_by('due_date')) if selected == today else []
+    overdue = list(Task.objects.filter(user=user, done=False, due_date__lt=today).order_by('due_date'))
 
-    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'time': '',
+    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'time': '', 'event_id': e.pk,
               'meta': f'{e.get_kind_display()}' + (f' · {e.location}' if e.location else ''),
               'right': e.date.strftime('%a'), 'toggle': None} for e in day_events]
     slots += [{'css': f'slot-t-{t.kind}', 'title': t.title,
@@ -146,21 +141,15 @@ def dashboard(request):
     ]
     recs = recommend_events(user, 1)
     recommendation = {'event': recs[0][0], 'reason': recs[0][1]} if recs else None
-    show_intro = not Goal.objects.filter(user=user).exists() and not Task.objects.filter(user=user).exists()
     return render(request, 'fivenine/dashboard.html', {
-        'greeting': greeting, 'name': user.username.capitalize(),
+        'greeting': greeting, 'name': display_name_for(user),
         'date_label': f'{selected:%A} · {selected.day} {selected:%B}'.upper(),
         'today': today, 'selected': selected,
-        'week_days': week_days,
-        'prev_day': (selected - _td(days=1)).isoformat(),
-        'next_day': (selected + _td(days=1)).isoformat(),
-        'prev_week': (monday - _td(days=7)).isoformat(),
-        'next_week': (monday + _td(days=7)).isoformat(),
         'slots': slots, 'overdue': overdue,
         'planned': planned, 'profile': profile,
         'eform': eform, 'recent_energy': recent_energy, 'warning': warning,
         'cap_pct': cap_pct, 'cap_note': cap_note, 'ring_off': ring_off, 'glance': glance,
-        'recommendation': recommendation, 'show_intro': show_intro,
+        'recommendation': recommendation,
     })
 
 
@@ -208,8 +197,13 @@ def goal_list(request):
         cards.append({'goal': g, 'done': done, 'total': total,
                       'pct': round(100 * done / total) if total else 0,
                       'steps': goal_next_steps(g)})
+    from datetime import timedelta as _td
+    today = timezone.now().date()
+    monday = today - _td(days=today.weekday())
+    week_actions = Task.objects.filter(
+        user=user, done=False, due_date__range=(monday, monday + _td(days=6))).order_by('due_date')
     return render(request, 'fivenine/goals.html',
-                  {'cards': cards, 'top_tasks': top_tasks,
+                  {'cards': cards, 'top_tasks': top_tasks, 'week_actions': week_actions,
                    'goal_form': goal_form, 'task_form': task_form})
 
 
@@ -227,6 +221,39 @@ def task_toggle(request, pk):
     task.done = not task.done
     task.save()
     return redirect(request.GET.get('next', 'dashboard'))
+
+
+@login_required
+def task_detail(request, pk):
+    """Google-calendar-style detail page: facts + editable notes."""
+    task = get_object_or_404(Task, pk=pk, user=request.user)
+    if request.method == 'POST':
+        if 'toggle' in request.POST:
+            task.done = not task.done
+            task.save()
+            return redirect('task_detail', pk=pk)
+        task.title = request.POST.get('title', task.title).strip() or task.title
+        try:
+            task.minutes = max(5, int(request.POST.get('minutes', task.minutes)))
+        except (TypeError, ValueError):
+            pass
+        task.due_date = request.POST.get('due_date') or None
+        task.start_time = request.POST.get('start_time') or None
+        task.notes = request.POST.get('notes', '')
+        task.save()
+        messages.success(request, 'Saved.')
+        return redirect('task_detail', pk=pk)
+    return render(request, 'fivenine/task_detail.html', {'task': task})
+
+
+@login_required
+def event_detail(request, pk):
+    event = get_object_or_404(CommunityEvent, pk=pk)
+    joined = EventAttendee.objects.filter(event=event, user=request.user).exists()
+    return render(request, 'fivenine/event_detail.html', {
+        'event': event, 'joined': joined,
+        'members': event.attendees.select_related('user'),
+    })
 
 
 def build_plan(user, minutes_available, energy_level):
@@ -295,17 +322,80 @@ def event_list(request):
 def event_join(request, pk):
     event = get_object_or_404(CommunityEvent, pk=pk)
     EventAttendee.objects.get_or_create(event=event, user=request.user)
-    return redirect('event_list')
+    return redirect(request.GET.get('next', 'event_list'))
 
 
 @login_required
 def event_leave(request, pk):
     EventAttendee.objects.filter(event_id=pk, user=request.user).delete()
-    return redirect('event_list')
+    return redirect(request.GET.get('next', 'event_list'))
+
+
+HOUSEHOLD_STARTERS = [
+    ('shop', 'Food shop', 60, 2, 'Most apprentices do a big shop weekly.'),
+    ('laundry', 'Laundry + put away', 40, 1, 'Small loads beat mountain day.'),
+    ('bathroom', 'Clean bathroom', 30, 2, 'Twenty focused minutes does it.'),
+    ('bins', 'Bins out + quick tidy', 20, 1, 'Tie it to bin day so you never miss it.'),
+    ('cook', 'Meal-prep lunches', 60, 2, 'Cook once, eat cheap all week.'),
+    ('reset', '15-minute reset', 15, 1, 'Low-energy friendly: one room, one timer.'),
+]
+
+
+@login_required
+def household(request):
+    """Household hub: open chores, recommendations, one-tap weekly planning."""
+    from datetime import timedelta as _td
+    user = request.user
+    chores = Task.objects.filter(user=user, kind='chore').order_by('done', 'due_date')
+    open_chores = chores.filter(done=False)
+
+    if request.method == 'POST':
+        if 'add' in request.POST:
+            key = request.POST['add']
+            match = next((s for s in HOUSEHOLD_STARTERS if s[0] == key), None)
+            if match is not None and not Task.objects.filter(user=user, title__iexact=match[1]).exists():
+                Task.objects.create(user=user, title=match[1], kind='chore',
+                                    minutes=match[2], energy_cost=match[3])
+                messages.success(request, f"Added '{match[1]}'.")
+            return redirect('household')
+        if 'plan' in request.POST:
+            profile = get_profile(user)
+            evenings = profile.evenings_per_week if profile else 4
+            undated = list(open_chores.filter(due_date__isnull=True).order_by('energy_cost'))
+            today = timezone.now().date()
+            for i, chore in enumerate(undated):
+                chore.due_date = today + _td(days=i % max(1, evenings))
+                chore.save(update_fields=['due_date'])
+            messages.success(request, f'Spread {len(undated)} chores across your evenings.')
+            return redirect('household')
+
+    known = ' '.join(t.title.lower() for t in open_chores)
+    recent = EnergyLog.objects.filter(user=user).order_by('-date', '-created_at')[:3]
+    low_energy = len(recent) >= 2 and sum(e.level for e in recent) / len(recent) <= 2.2
+    suggestions = []
+    for key, title, minutes, energy, reason in HOUSEHOLD_STARTERS:
+        if key == 'reset' and not low_energy:
+            continue
+        if key != 'reset' and key in known:
+            continue
+        if Task.objects.filter(user=user, title__iexact=title).exists():
+            continue
+        suggestions.append({'key': key, 'title': title, 'minutes': minutes,
+                            'energy': energy, 'reason': reason})
+    undated_count = open_chores.filter(due_date__isnull=True).count()
+    return render(request, 'fivenine/household.html', {
+        'chores': chores, 'suggestions': suggestions, 'undated_count': undated_count,
+    })
 
 
 def recommend_events(user, limit=3):
-    """Upcoming events scored by skill overlap + popularity. Returns [(event, reason)]."""
+    """Upcoming events scored by skill overlap + popularity. Returns [(event, reason)].
+    Cached 15 min per user (locmem) so home + community pages stay cheap."""
+    from django.core.cache import cache
+    key = f'fivenine:recs:{user.id}:{limit}'
+    hit = cache.get(key)
+    if hit is not None:
+        return hit
     profile = get_profile(user)
     skills = [s.strip().lower() for s in ((profile.skills or '') if profile else '').split(',') if s.strip()]
     upcoming = list(CommunityEvent.objects.filter(date__gte=timezone.now().date()).prefetch_related('attendees'))
@@ -323,7 +413,9 @@ def recommend_events(user, limit=3):
             reason = 'New and upcoming'
         scored.append((score, e, reason))
     scored.sort(key=lambda x: -x[0])
-    return [(e, r) for _, e, r in scored[:limit]]
+    result = [(e, r) for _, e, r in scored[:limit]]
+    cache.set(key, result, 900)
+    return result
 
 
 @login_required
