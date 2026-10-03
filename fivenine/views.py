@@ -433,8 +433,8 @@ def ics_feed(request, token):
     profile = get_object_or_404(UserProfile, calendar_token=token)
     user = profile.user
     stamp = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
-    lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//5-9 Planner//EN', 'CALSCALE:GREGORIAN',
-             'X-WR-CALNAME:5-9 Planner']
+    lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Life 5-9//EN', 'CALSCALE:GREGORIAN',
+             'X-WR-CALNAME:Life 5-9']
     uid = 0
 
     def esc(text):

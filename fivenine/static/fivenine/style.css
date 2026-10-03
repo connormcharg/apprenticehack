@@ -1,5 +1,5 @@
 /* ==========================================================================
-   5-9 Planner — shared design tokens and components
+   Life 5-9 — shared design tokens and components
    Warm off-white, charcoal text, restrained purple accent. Light and dark
    system preferences supported. These tokens mirror
    onboarding/static/onboarding/css/onboarding.css — keep the two in sync.
@@ -269,14 +269,14 @@ small {
 .brand-mark {
   display: inline-grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  padding: 0.4rem 0.9rem;
   border-radius: var(--radius-m);
   background: var(--accent);
   color: var(--on-accent);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
 /* Compact header */
@@ -824,13 +824,13 @@ input[type="radio"] {
   border: 1px solid var(--border);
   border-left: 4px solid var(--c, var(--accent));
   border-radius: var(--radius-m);
-  background: var(--tint, transparent);
-  color: #23282c;
+  background: var(--surface-2);
+  color: var(--text);
   text-decoration: none;
 }
 
 .task-row:hover {
-  background: var(--tint, var(--accent-soft));
+  background: var(--accent-soft);
 }
 
 .task-time {
@@ -838,7 +838,7 @@ input[type="radio"] {
   width: 3rem;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #4c565c;
+  color: var(--muted);
 }
 
 .task-time.task-date {
@@ -855,12 +855,12 @@ input[type="radio"] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #23282c;
+  color: var(--text);
 }
 
 .task-main small {
   display: block;
-  color: #4c565c;
+  color: var(--muted);
   font-size: 0.78rem;
   white-space: nowrap;
   overflow: hidden;
@@ -884,16 +884,18 @@ a.task-row .task-dur {
 
 /* Category tints (opaque so rows stay readable in both modes) */
 
-.slot-t-goal { --c: #7c3aed; --tint: #f1eafe; }
-.slot-t-chore { --c: #57534e; --tint: #eceae6; }
-.slot-t-study { --c: #8b5cf6; --tint: #efe9fd; }
-.slot-t-rest { --c: #78716c; --tint: #f1ede9; }
-.slot-t-social { --c: #a855f7; --tint: #f5eafe; }
-.slot-e-hackathon { --c: #7c3aed; --tint: #f1eafe; }
-.slot-e-social { --c: #a855f7; --tint: #f5eafe; }
-.slot-e-multi-company { --c: #6d6d6d; --tint: #ededeb; }
-.slot-e-learning { --c: #9333ea; --tint: #f3e8fd; }
-.slot-overdue { --c: #b3261e; --tint: #fbe9e7; }
+/* Category bar colours (readable on any theme; rows use theme surfaces) */
+
+.slot-t-goal { --c: #7c3aed; }
+.slot-t-chore { --c: #57534e; }
+.slot-t-study { --c: #8b5cf6; }
+.slot-t-rest { --c: #78716c; }
+.slot-t-social { --c: #a855f7; }
+.slot-e-hackathon { --c: #7c3aed; }
+.slot-e-social { --c: #a855f7; }
+.slot-e-multi-company { --c: #6d6d6d; }
+.slot-e-learning { --c: #9333ea; }
+.slot-overdue { --c: #b3261e; }
 
 /* Goals ------------------------------------------------------------------ */
 

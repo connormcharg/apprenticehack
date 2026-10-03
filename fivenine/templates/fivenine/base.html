@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{% block title %}5-9 Planner — life after work{% endblock %}</title>
+<title>{% block title %}Life 5-9 — life after work{% endblock %}</title>
 <meta name="description" content="A 5-9 life planner for apprentices: goals, household, study and rest without burnout.">
 <meta name="theme-color" content="#faf8f3">
 {% load static %}
@@ -17,13 +17,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="5-9 Planner">
+<meta name="apple-mobile-web-app-title" content="Life 5-9">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
 <div class="app">
   <aside class="sidebar">
-    <a class="brand" href="{% url 'dashboard' %}"><span class="brand-mark" aria-hidden="true">5–9</span> 5-9 Planner</a>
+    <a class="brand" href="{% url 'dashboard' %}" aria-label="Life 5-9 home"><span class="brand-mark" aria-hidden="true">Life 5-9</span></a>
     {% if user.is_authenticated %}
     <nav aria-label="Primary">
       {% include 'fivenine/_nav_links.html' %}
@@ -40,7 +40,7 @@
         {% if user.is_authenticated %}
         <button id="nav-toggle" class="icon-btn" aria-label="Open menu" aria-expanded="false" aria-controls="nav-drawer"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
         {% endif %}
-        <a class="brand brand-mobile" href="{% url 'dashboard' %}"><span class="brand-mark" aria-hidden="true">5–9</span> 5-9 Planner</a>
+        <a class="brand brand-mobile" href="{% url 'dashboard' %}" aria-label="Life 5-9 home"><span class="brand-mark" aria-hidden="true">Life 5-9</span></a>
         <div class="topbar-actions">
           {% if user.is_authenticated %}
           <button class="ask-btn" type="button" onclick="document.getElementById('chat-fab').click()"><i class="ph-bold ph-sparkle" aria-hidden="true"></i> Ask AI</button>

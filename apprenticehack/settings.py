@@ -160,4 +160,4 @@ MAILERS = {
 OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
 OPENROUTER_MODEL = os.environ.get('OPENROUTER_MODEL', 'qwen/qwen3.8-27b:free')
 OPENROUTER_BASE_URL = os.environ.get('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
-OPENROUTER_APP_NAME = os.environ.get('OPENROUTER_APP_NAME', '5-9 Planner')
+OPENROUTER_APP_NAME = os.environ.get('OPENROUTER_APP_NAME', 'Life 5-9')
