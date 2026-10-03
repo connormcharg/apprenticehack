@@ -1,12 +1,7 @@
 {
-<<<<<<< HEAD
+  "id": "/",
   "name": "Life 5-9",
   "short_name": "Life 5-9",
-=======
-  "id": "/",
-  "name": "5-9 Planner",
-  "short_name": "5-9",
->>>>>>> 8ffce918dc0cadb0eb6055d804aa4a34a15e40e5
   "description": "Life after work: goals, household, study and rest without burnout.",
   "lang": "en",
   "start_url": "/home/",

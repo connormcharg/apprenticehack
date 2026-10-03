@@ -91,7 +91,7 @@ class PwaTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/manifest+json")
         data = json.loads(b"".join(response.streaming_content))
-        self.assertEqual(data["name"], "5-9 Planner")
+        self.assertEqual(data["name"], "Life 5-9")
         self.assertEqual(data["display"], "standalone")
         self.assertTrue(any(icon["sizes"] == "512x512" for icon in data["icons"]))
 
