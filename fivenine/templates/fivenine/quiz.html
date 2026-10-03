@@ -14,6 +14,12 @@
   <p><label>Company</label>{{ form.company }}</p>
   <p><label>Location</label>{{ form.location }}</p>
   <p><label>Skills (comma-separated)</label>{{ form.skills }}</p>
+  <h3>8. Your regular weekly tasks</h3>
+  <p class="muted">One per line — washing, food shop, gym... each becomes a household task.</p>
+  <p>{{ form.weekly_tasks }}</p>
+  <h3>9. One headline goal</h3>
+  <p>{{ form.first_goal }}</p>
+  <p><label>Goal area</label>{{ form.first_goal_category }}</p>
   <input type="submit" value="Start my 5-9 →">
 </form>
 </div>

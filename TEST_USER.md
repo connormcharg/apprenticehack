@@ -2,8 +2,9 @@
 
 Use this account to log in and try the app locally.
 
-- URL: http://127.0.0.1:8000/login/ (app home: http://127.0.0.1:8000/home/)
-- Username: `demo`
+- Log in at http://127.0.0.1:8000/login/ (username) or
+  http://127.0.0.1:8000/onboarding/sign-in/ (email) — app home: http://127.0.0.1:8000/home/
+- Username / email: `demo@example.com`
 - Password: `demo-pass-59`
 
 The quiz is already completed for this user, with seeded goals,

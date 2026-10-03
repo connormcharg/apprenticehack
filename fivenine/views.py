@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from .forms import EnergyForm, EventForm, GoalForm, PlanForm, QuizForm, SignupForm, TaskForm
-from .models import CommunityEvent, EnergyLog, Goal, Task, UserProfile
+from .models import CommunityEvent, EnergyLog, EventAttendee, Goal, Task, UserProfile
 
 
 def manifest(request):
@@ -42,11 +42,21 @@ def signup(request):
 def quiz(request):
     """First-login quiz: person type + time commitment + company/skills/location."""
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    first_time = not profile.quiz_done
     form = QuizForm(request.POST or None, instance=profile)
     if request.method == 'POST' and form.is_valid():
         profile = form.save(commit=False)
         profile.quiz_done = True
         profile.save()
+        if first_time:
+            for line in (form.cleaned_data.get('weekly_tasks') or '').splitlines():
+                title = line.strip().lstrip('-*• ').strip()
+                if title and not Task.objects.filter(user=request.user, title__iexact=title).exists():
+                    Task.objects.create(user=request.user, title=title, kind='chore', minutes=30, energy_cost=1)
+            first_goal = (form.cleaned_data.get('first_goal') or '').strip()
+            if first_goal and not Goal.objects.filter(user=request.user, title__iexact=first_goal).exists():
+                Goal.objects.create(user=request.user, title=first_goal,
+                                    category=form.cleaned_data.get('first_goal_category') or 'career')
         messages.success(request, 'All set! Here is your 5-9.')
         return redirect('dashboard')
     return render(request, 'fivenine/quiz.html', {'form': form})
@@ -110,17 +120,51 @@ def dashboard(request):
     day_events = list(CommunityEvent.objects.filter(date=selected))
     overdue = list(Task.objects.filter(user=user, done=False, due_date__lt=today).order_by('due_date')) if selected == today else []
 
-    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title,
+    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'time': '',
               'meta': f'{e.get_kind_display()}' + (f' · {e.location}' if e.location else ''),
-              'toggle': None} for e in day_events]
+              'right': e.date.strftime('%a'), 'toggle': None} for e in day_events]
     slots += [{'css': f'slot-t-{t.kind}', 'title': t.title,
+               'time': f'{t.start_time:%H:%M}' if t.start_time else '',
                'meta': f'{t.get_kind_display()} · {t.minutes} min' + (f' · {t.goal.title}' if t.goal else ''),
-               'toggle': t.pk} for t in day_tasks]
+               'right': f'{t.minutes}m', 'toggle': t.pk} for t in day_tasks]
+    slots.sort(key=lambda s: (s['time'] == '', s['time']))
 
     planned = sum(t.minutes for t in day_tasks)
     profile = get_profile(user)
     recent_energy = EnergyLog.objects.filter(user=user)[:3]
     warning = burnout_warning(user)
+
+    # Week capacity + at-a-glance (mockup hero).
+    week_end = monday + _td(days=6)
+    week_tasks = Task.objects.filter(user=user, done=False, due_date__range=(monday, week_end))
+    planned_week = sum(t.minutes for t in week_tasks)
+    budget = (profile.minutes_per_evening * profile.evenings_per_week) if profile else 600
+    cap_pct = min(100, round(100 * planned_week / budget)) if budget else 0
+    ring_off = round(276.5 * (1 - cap_pct / 100))
+    if cap_pct >= 90:
+        cap_note = 'Busy week. Tonight stays light and Sunday is protected.'
+    elif cap_pct >= 60:
+        cap_note = 'Steady week. Evenings balanced around your energy.'
+    else:
+        cap_note = 'Light week. Good space to push a goal forward.'
+    study_week = [t for t in week_tasks if t.kind == 'study']
+    study_mins = sum(t.minutes for t in study_week)
+    networking = CommunityEvent.objects.filter(
+        date__gte=today, kind__in=['hackathon', 'multi-company', 'learning']).count()
+    free_mins = max(0, budget - planned_week)
+    work_info = apprentice_work_info(user)
+    glance = [
+        {'label': 'Work', 'value': work_info['value'], 'sub': work_info['sub']},
+        {'label': 'University', 'value': f'{study_mins // 60}h{study_mins % 60 and f"{study_mins % 60}m" or ""}' if study_mins else '0h',
+         'sub': f'{len(study_week)} sessions + study' if study_week else 'No study planned'},
+        {'label': 'Career', 'value': str(networking),
+         'sub': 'Networking opportunities' if networking else 'No events yet'},
+        {'label': 'Free time', 'value': f'{free_mins // 60}h{free_mins % 60 and f"{free_mins % 60}m" or ""}',
+         'sub': 'Protected by AI'},
+    ]
+    recs = recommend_events(user, 1)
+    recommendation = {'event': recs[0][0], 'reason': recs[0][1]} if recs else None
+    show_intro = not Goal.objects.filter(user=user).exists() and not Task.objects.filter(user=user).exists()
     return render(request, 'fivenine/dashboard.html', {
         'greeting': greeting, 'name': user.username.capitalize(),
         'date_label': f'{selected:%A} · {selected.day} {selected:%B}'.upper(),
@@ -133,20 +177,38 @@ def dashboard(request):
         'slots': slots, 'overdue': overdue,
         'planned': planned, 'profile': profile,
         'eform': eform, 'recent_energy': recent_energy, 'warning': warning,
+        'cap_pct': cap_pct, 'cap_note': cap_note, 'ring_off': ring_off, 'glance': glance,
+        'recommendation': recommendation, 'show_intro': show_intro,
     })
+
+
+def apprentice_work_info(user):
+    """Work hours from the onboarding Apprentice profile, if set."""
+    try:
+        from onboarding.models import Apprentice
+        ap = Apprentice.objects.filter(user=user).first()
+        if ap is not None and ap.has_working_hours:
+            hrs = (ap.work_hours() or 0) * 5
+            return {'value': f'{hrs:g}h',
+                    'sub': f"Mon–Fri · {ap.work_start:%H:%M}–{ap.work_end:%H:%M}"}
+    except Exception:
+        pass
+    return {'value': '—', 'sub': 'Set hours in onboarding'}
 
 
 @login_required
 def goal_list(request):
-    """Goals + tasks on one page."""
+    """Goals + tasks on one page, with progress bars and next steps."""
+    from .models import goal_next_steps, goal_progress
     user = request.user
     goals = Goal.objects.filter(user=user).order_by('done', 'target_date')
-    tasks = Task.objects.filter(user=user).order_by('done', 'due_date')
+    top_tasks = Task.objects.filter(user=user, parent__isnull=True).order_by('done', 'due_date').prefetch_related('subtasks')
     is_post = request.method == 'POST'
     form_type = request.POST.get('form_type', 'goal') if is_post else 'goal'
     goal_form = GoalForm(request.POST if is_post and form_type == 'goal' else None)
     task_form = TaskForm(request.POST if is_post and form_type == 'task' else None)
     task_form.fields['goal'].queryset = Goal.objects.filter(user=user, done=False)
+    task_form.fields['parent'].queryset = Task.objects.filter(user=user, parent__isnull=True, done=False)
     if is_post:
         if form_type == 'task' and task_form.is_valid():
             task = task_form.save(commit=False)
@@ -158,8 +220,15 @@ def goal_list(request):
             goal.user = user
             goal.save()
             return redirect('goal_list')
+    cards = []
+    for g in goals:
+        done, total = goal_progress(g)
+        cards.append({'goal': g, 'done': done, 'total': total,
+                      'pct': round(100 * done / total) if total else 0,
+                      'steps': goal_next_steps(g)})
     return render(request, 'fivenine/goals.html',
-                  {'goals': goals, 'tasks': tasks, 'goal_form': goal_form, 'task_form': task_form})
+                  {'cards': cards, 'top_tasks': top_tasks,
+                   'goal_form': goal_form, 'task_form': task_form})
 
 
 @login_required
@@ -223,18 +292,56 @@ def evening_plan(request):
 @login_required
 def event_list(request):
     kind = request.GET.get('kind', '')
-    events = CommunityEvent.objects.order_by('date')
+    events = CommunityEvent.objects.order_by('date').prefetch_related('attendees__user')
     if kind:
         events = events.filter(kind=kind)
     form = EventForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        event = form.save()
+        EventAttendee.objects.get_or_create(event=event, user=request.user)
         return redirect('event_list')
     upcoming = events.filter(date__gte=timezone.now().date())
+    my_ids = set(EventAttendee.objects.filter(user=request.user).values_list('event_id', flat=True))
     return render(request, 'fivenine/events.html', {
         'events': events, 'upcoming': upcoming, 'form': form,
         'active_kind': kind, 'kinds': CommunityEvent.KINDS,
+        'recommended': recommend_events(request.user, 3), 'my_ids': my_ids,
     })
+
+
+@login_required
+def event_join(request, pk):
+    event = get_object_or_404(CommunityEvent, pk=pk)
+    EventAttendee.objects.get_or_create(event=event, user=request.user)
+    return redirect('event_list')
+
+
+@login_required
+def event_leave(request, pk):
+    EventAttendee.objects.filter(event_id=pk, user=request.user).delete()
+    return redirect('event_list')
+
+
+def recommend_events(user, limit=3):
+    """Upcoming events scored by skill overlap + popularity. Returns [(event, reason)]."""
+    profile = get_profile(user)
+    skills = [s.strip().lower() for s in ((profile.skills or '') if profile else '').split(',') if s.strip()]
+    upcoming = list(CommunityEvent.objects.filter(date__gte=timezone.now().date()).prefetch_related('attendees'))
+    scored = []
+    for e in upcoming:
+        text = f'{e.title} {e.topic} {e.description}'.lower()
+        hits = [s for s in skills if len(s) > 2 and s in text]
+        members = e.attendees.count()
+        score = 2 * len(hits) + min(members, 5) * 0.2 + (1 if e.kind in ('hackathon', 'multi-company') else 0)
+        if hits:
+            reason = f'Matches your interest in {hits[0]}'
+        elif members:
+            reason = f'{members} going'
+        else:
+            reason = 'New and upcoming'
+        scored.append((score, e, reason))
+    scored.sort(key=lambda x: -x[0])
+    return [(e, r) for _, e, r in scored[:limit]]
 
 
 @login_required
@@ -297,10 +404,18 @@ def ics_feed(request, token):
     for t in Task.objects.filter(user=user, done=False, due_date__isnull=False):
         uid += 1
         d = t.due_date.strftime('%Y%m%d')
-        lines += [ 'BEGIN:VEVENT',
-            f'UID:task-{t.pk}-{uid}@five-nine', f'DTSTAMP:{stamp}', f'DTSTART;VALUE=DATE:{d}',
-            f'SUMMARY:{esc(t.title)} (5-9: {t.minutes}m)',
-            f'DESCRIPTION:{esc(t.get_kind_display())} · energy {t.energy_cost}', 'END:VEVENT']
+        if t.start_time:
+            dt = f'{d}T{t.start_time:%H%M%S}'
+            lines += ['BEGIN:VEVENT',
+                f'UID:task-{t.pk}-{uid}@five-nine', f'DTSTAMP:{stamp}', f'DTSTART:{dt}',
+                f'DURATION:PT{t.minutes}M',
+                f'SUMMARY:{esc(t.title)} (5-9)',
+                f'DESCRIPTION:{esc(t.get_kind_display())} · energy {t.energy_cost}', 'END:VEVENT']
+        else:
+            lines += ['BEGIN:VEVENT',
+                f'UID:task-{t.pk}-{uid}@five-nine', f'DTSTAMP:{stamp}', f'DTSTART;VALUE=DATE:{d}',
+                f'SUMMARY:{esc(t.title)} (5-9: {t.minutes}m)',
+                f'DESCRIPTION:{esc(t.get_kind_display())} · energy {t.energy_cost}', 'END:VEVENT']
     for e in CommunityEvent.objects.all():
         uid += 1
         d = e.date.strftime('%Y%m%d')

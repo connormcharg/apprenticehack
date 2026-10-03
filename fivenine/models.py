@@ -73,17 +73,28 @@ class Task(models.Model):
         ('social', 'Social'),
     ]
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='tasks')
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='subtasks',
+                               help_text='Set to make this a sub-task of another task')
     title = models.CharField(max_length=200)
     kind = models.CharField(max_length=20, choices=KINDS, default='goal')
     goal = models.ForeignKey(Goal, null=True, blank=True, on_delete=models.SET_NULL, related_name='tasks')
     minutes = models.PositiveIntegerField(default=30, help_text='How long in minutes')
     energy_cost = models.PositiveSmallIntegerField(default=2, choices=[(1, 'Low'), (2, 'Medium'), (3, 'High')])
     due_date = models.DateField(null=True, blank=True)
+    start_time = models.TimeField(null=True, blank=True, help_text='Optional start time, e.g. 18:30')
     done = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
+
+    def progress(self):
+        """(done_count, total_count) including sub-tasks."""
+        kids = list(self.subtasks.all())
+        if not kids:
+            return (1 if self.done else 0, 1)
+        done = sum(1 for k in kids if k.done)
+        return done, len(kids)
 
 
 class EnergyLog(models.Model):
@@ -109,6 +120,7 @@ class CommunityEvent(models.Model):
     ]
     title = models.CharField(max_length=200)
     kind = models.CharField(max_length=20, choices=KINDS, default='social')
+    topic = models.CharField(max_length=120, blank=True, help_text='e.g. cybersecurity, climbing, CV help')
     date = models.DateField()
     location = models.CharField(max_length=200, blank=True, help_text='Place or link')
     description = models.TextField(blank=True)
@@ -119,3 +131,48 @@ class CommunityEvent(models.Model):
 
     def __str__(self):
         return f'{self.title} ({self.date})'
+
+    def member_count(self):
+        return self.attendees.count()
+
+
+class EventAttendee(models.Model):
+    """Someone going to a community event (powers member display + RSVP)."""
+    event = models.ForeignKey(CommunityEvent, on_delete=models.CASCADE, related_name='attendees')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='event_rsvps')
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [('event', 'user')]
+        ordering = ['joined_at']
+
+    def __str__(self):
+        return f'{self.user.username} -> {self.event.title}'
+
+
+def goal_progress(goal):
+    """(done, total) across a goal's top-level tasks including their sub-tasks."""
+    done = total = 0
+    for task in goal.tasks.filter(parent__isnull=True):
+        if task.subtasks.exists():
+            for sub in task.subtasks.all():
+                total += 1
+                done += 1 if sub.done else 0
+        else:
+            total += 1
+            done += 1 if task.done else 0
+    return done, total
+
+
+def goal_next_steps(goal, limit=3):
+    """Oldest open tasks (top-level first) as the goal's next steps."""
+    steps = []
+    for task in goal.tasks.filter(parent__isnull=True, done=False).order_by('due_date'):
+        open_subs = task.subtasks.filter(done=False)
+        if open_subs.exists():
+            steps.extend(open_subs.order_by('created_at')[:max(0, limit - len(steps))])
+        else:
+            steps.append(task)
+        if len(steps) >= limit:
+            break
+    return steps[:limit]

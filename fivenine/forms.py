@@ -11,6 +11,15 @@ class SignupForm(UserCreationForm):
 
 class QuizForm(forms.ModelForm):
     """First-login quiz: person type + time commitment + professional bits."""
+    weekly_tasks = forms.CharField(
+        required=False, widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'e.g. food shop\nlaundry\nclean bathroom'}),
+        help_text='One per line — each becomes a household task.')
+    first_goal = forms.CharField(
+        required=False, max_length=200,
+        widget=forms.TextInput(attrs={'placeholder': 'e.g. Run a 5k'}),
+        help_text='Your headline goal for the next few weeks.')
+    first_goal_category = forms.ChoiceField(choices=Goal.CATEGORIES, initial='career', required=False)
+
     class Meta:
         model = UserProfile
         fields = ['person_type', 'chronotype', 'evenings_per_week', 'minutes_per_evening',
@@ -33,8 +42,9 @@ class GoalForm(forms.ModelForm):
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ['title', 'kind', 'goal', 'minutes', 'energy_cost', 'due_date']
-        widgets = {'due_date': forms.DateInput(attrs={'type': 'date'})}
+        fields = ['title', 'kind', 'goal', 'parent', 'minutes', 'energy_cost', 'due_date', 'start_time']
+        widgets = {'due_date': forms.DateInput(attrs={'type': 'date'}),
+                   'start_time': forms.TimeInput(attrs={'type': 'time'})}
 
 
 class EnergyForm(forms.ModelForm):
@@ -47,7 +57,7 @@ class EnergyForm(forms.ModelForm):
 class EventForm(forms.ModelForm):
     class Meta:
         model = CommunityEvent
-        fields = ['title', 'kind', 'date', 'location', 'description']
+        fields = ['title', 'kind', 'topic', 'date', 'location', 'description']
         widgets = {'date': forms.DateInput(attrs={'type': 'date'})}
 
 

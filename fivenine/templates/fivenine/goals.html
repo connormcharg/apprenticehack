@@ -1,15 +1,31 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
 <h1 class="page-title">Goals and tasks</h1>
-<p class="page-sub">Big goals, broken into after-work chunks.</p>
+<p class="page-sub">Big goals, broken into after-work chunks. Ask the + button to add anything in plain English.</p>
 <div class="grid">
 <div class="card"><h3>Add a goal</h3><form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="goal">{{ goal_form.as_p }}<input type="submit" value="Add goal"></form></div>
 <div class="card"><h3>Add a task</h3><form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="task">{{ task_form.as_p }}<input type="submit" value="Add task"></form></div>
 </div>
-<h2 class="section-h">Open goals</h2>
-{% for g in goals %}{% if not g.done %}<div class="card"><p><span class="badge">{{ g.get_category_display }}</span><br><strong>{{ g.title }}</strong>{% if g.target_date %} <small>· by {{ g.target_date }}</small>{% endif %}<br>{{ g.description }}<br><a href="{% url 'goal_toggle' g.pk %}">Mark done</a></p></div>{% endif %}{% empty %}<div class="card"><p class="muted">No goals yet.</p></div>{% endfor %}
-<h2 class="section-h">Tasks</h2>
-{% for t in tasks %}<div class="card"><p><span class="badge">{{ t.get_kind_display }} · {{ t.minutes }}m · energy {{ t.energy_cost }}</span><br><strong>{% if t.done %}Done — {% endif %}{{ t.title }}</strong>{% if t.goal %} <small>· {{ t.goal.title }}</small>{% endif %}{% if t.due_date %} <small>· due {{ t.due_date }}</small>{% endif %}<br><a href="{% url 'task_toggle' t.pk %}?next=/goals/">{% if t.done %}Reopen{% else %}Done{% endif %}</a></p></div>{% endfor %}
-<h2 class="section-h">Completed goals</h2>
-{% for g in goals %}{% if g.done %}<div class="card"><p><strong>{{ g.title }}</strong> <small>{{ g.get_category_display }}</small> · <a href="{% url 'goal_toggle' g.pk %}">Reopen</a></p></div>{% endif %}{% endfor %}
+{% for c in cards %}
+<div class="card">
+  <p><span class="badge">{{ c.goal.get_category_display }}</span><br>
+  <strong>{% if c.goal.done %}Done — {% endif %}{{ c.goal.title }}</strong>{% if c.goal.target_date %} <small>· by {{ c.goal.target_date }}</small>{% endif %}<br>
+  <small>{{ c.goal.description }}</small></p>
+  <div class="bar"><div class="fill" style="width:{{ c.pct }}%"></div></div>
+  <p class="muted">{{ c.done }} of {{ c.total }} steps · {{ c.pct }}%</p>
+  {% if c.steps %}<p><strong>Next up:</strong><br>{% for s in c.steps %}— {{ s.title }} <small>({{ s.minutes }}m)</small><br>{% endfor %}</p>{% endif %}
+  <p><a href="{% url 'goal_toggle' c.goal.pk %}">{% if c.goal.done %}Reopen{% else %}Mark done{% endif %}</a></p>
+</div>
+{% empty %}<div class="card"><p class="muted">No goals yet — add one above, or tell the + button your goal.</p></div>{% endfor %}
+<h2 class="section-h">All tasks</h2>
+{% for t in top_tasks %}
+<div class="card task-row">
+  <p><span class="badge">{{ t.get_kind_display }} · {{ t.minutes }}m · energy {{ t.energy_cost }}</span><br>
+  <strong>{% if t.done %}Done — {% endif %}{{ t.title }}</strong>{% if t.goal %} <small>· {{ t.goal.title }}</small>{% endif %}{% if t.due_date %} <small>· due {{ t.due_date }}</small>{% endif %}{% if t.start_time %} <small>· {{ t.start_time|time:'H:i' }}</small>{% endif %}<br>
+  <a href="{% url 'task_toggle' t.pk %}?next=/goals/">{% if t.done %}Reopen{% else %}Done{% endif %}</a></p>
+  {% for s in t.subtasks.all %}
+  <p class="subtask"><strong>{% if s.done %}Done — {% endif %}{{ s.title }}</strong> <small>{{ s.minutes }}m</small> · <a href="{% url 'task_toggle' s.pk %}?next=/goals/">{% if s.done %}Reopen{% else %}Done{% endif %}</a></p>
+  {% endfor %}
+</div>
+{% endfor %}
 {% endblock %}

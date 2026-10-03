@@ -1,18 +1,48 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
-<p class="date-eyebrow">{{ date_label }}</p>
-<div class="greet-row">
+{% if show_intro %}
+<section class="card intro">
+  <h2>Welcome to your 5-9</h2>
+  <p class="muted">Built for apprentices juggling work, uni and life. Three steps to get going:</p>
+  <p><strong>1.</strong> <a href="{% url 'quiz' %}">Take the 60-second quiz</a> — free time, weekly tasks, first goal.<br>
+  <strong>2.</strong> Add anything with the <strong>+</strong> button in plain English ("tennis tomorrow 6:30").<br>
+  <strong>3.</strong> <a href="{% url 'event_list' %}">Find your community</a> — hackathons, socials, societies.</p>
+</section>
+{% endif %}
+
+<section class="hero-banner">
   <div>
-    <h1 class="greet">{{ greeting }}, {{ name }}</h1>
-    <p class="greet-sub">Here's what your day looks like.</p>
+    <p class="eyebrow-lite">{{ date_label }}</p>
+    <h1>{{ greeting }}, {{ name }} — your week, without the overwhelm.</h1>
+    <p>Work, university, life and career growth — planned around your actual capacity, not just empty calendar slots.</p>
+    <div class="cta-row">
+      <a class="btn-light" href="{% url 'calendar' %}">View my week</a>
+      <a class="btn-light" href="{% url 'event_list' %}">Find networking</a>
+    </div>
   </div>
-  <a class="cta" href="{% url 'evening_plan' %}?day={{ selected|date:'Y-m-d' }}">Plan tonight</a>
+  <div class="capacity">
+    <svg width="110" height="110" viewBox="0 0 110 110" role="img" aria-label="Weekly capacity {{ cap_pct }} percent">
+      <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="12"/>
+      <circle cx="55" cy="55" r="44" fill="none" stroke="white" stroke-width="12" stroke-linecap="round"
+        stroke-dasharray="276.5" stroke-dashoffset="{{ ring_off }}" transform="rotate(-90 55 55)"/>
+      <text x="55" y="62" text-anchor="middle" fill="white" font-size="20" font-weight="800">{{ cap_pct }}%</text>
+    </svg>
+    <p><strong>Weekly capacity.</strong> {{ cap_note }}</p>
+  </div>
+</section>
+
+<h2 class="section-h">At a glance</h2>
+<div class="grid glance-grid">
+  {% for g in glance %}
+  <div class="card glance"><h3>{{ g.label }}</h3><p class="glance-val">{{ g.value }}</p><p class="muted">{{ g.sub }}</p></div>
+  {% endfor %}
 </div>
+
 {% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
 
 <section class="card day-card">
   <div class="week-head">
-    <h2>{% if selected == today %}This week{% else %}{{ selected|date:'j M' }}{% endif %}</h2>
+    <h2>{% if selected == today %}Today{% else %}{{ selected|date:'l j M' }}{% endif %}</h2>
     <div class="week-nav">
       <a href="?day={{ prev_week }}" aria-label="Previous week">‹</a>
       <a href="?day={{ next_week }}" aria-label="Next week">›</a>
@@ -35,6 +65,7 @@
     <h3>Overdue</h3>
     {% for t in overdue %}
     <div class="slot slot-overdue">
+      <span class="slot-time"></span>
       <div class="slot-main"><strong>{{ t.title }}</strong><small>Due {{ t.due_date }} · {{ t.minutes }} min</small></div>
       <a class="slot-done" href="{% url 'task_toggle' t.pk %}?next=/home/?day={{ selected|date:'Y-m-d' }}">Done</a>
     </div>
@@ -44,17 +75,30 @@
   <div class="slots">
     {% for s in slots %}
     <div class="slot {{ s.css }}">
+      <span class="slot-time">{{ s.time }}</span>
       <div class="slot-main"><strong>{{ s.title }}</strong><small>{{ s.meta }}</small></div>
+      <span class="slot-right">{{ s.right }}</span>
       {% if s.toggle %}<a class="slot-done" href="{% url 'task_toggle' s.toggle %}?next=/home/?day={{ selected|date:'Y-m-d' }}">Done</a>{% endif %}
     </div>
     {% empty %}
-    <p class="muted">Nothing scheduled — enjoy the open evening, or <a href="{% url 'goal_list' %}">add something</a>.</p>
+    <p class="muted">Nothing scheduled — enjoy the open evening, or tell the + button what to add.</p>
     {% endfor %}
   </div>
   {% if profile %}
   <p class="muted budget">{{ planned }} min planned of ~{{ profile.minutes_per_evening }} min evening budget · <a href="{% url 'evening_plan' %}">Generate tonight's plan</a></p>
   {% endif %}
 </section>
+
+{% if recommendation %}
+<section>
+  <h2 class="section-h">AI recommendation</h2>
+  <div class="card ai-rec">
+    <p><strong>You have a networking opportunity {{ recommendation.event.date|date:'l' }}.</strong><br>
+    <span class="muted">{{ recommendation.reason }}: {{ recommendation.event.title }}, {{ recommendation.event.date|date:'j M' }}{% if recommendation.event.location %} · {{ recommendation.event.location }}{% endif %}.</span></p>
+    <p><a class="cta" href="{% url 'event_list' %}">See the match</a></p>
+  </div>
+</section>
+{% endif %}
 
 <section class="grid">
   <div class="card">
