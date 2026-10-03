@@ -1,5 +1,5 @@
-const CACHE = 'five-nine-v1';
-const CORE = ['/', '/static/fivenine/style.css', '/manifest.webmanifest'];
+const CACHE = 'five-nine-v2';
+const CORE = ['/home/', '/static/fivenine/style.css', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));

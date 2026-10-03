@@ -88,17 +88,13 @@ def burnout_warning(user):
 
 @login_required
 def dashboard(request):
-    """Home: greeting + week strip + selected-day schedule + energy check-in."""
-    from datetime import date as _date, timedelta as _td
+    """Home: today-only day view + capacity + energy check-in."""
+    from datetime import timedelta as _td
     if needs_quiz(request.user):
         return redirect('quiz')
     user = request.user
     today = timezone.now().date()
-    day_param = request.GET.get('day', '')
-    try:
-        selected = _date.fromisoformat(day_param) if day_param else today
-    except ValueError:
-        selected = today
+    selected = today
 
     if request.method == 'POST':
         eform = EnergyForm(request.POST)
@@ -107,18 +103,17 @@ def dashboard(request):
             entry.user = user
             entry.save()
             messages.success(request, 'Energy logged.')
-            return redirect(f'/home/?day={selected.isoformat()}')
+            return redirect('/home/')
     else:
         eform = EnergyForm(initial={'date': today, 'level': 3})
 
     hour = timezone.now().hour
     greeting = 'Good morning' if hour < 12 else 'Good afternoon' if hour < 18 else 'Good evening'
     monday = selected - _td(days=selected.weekday())
-    week_days = [monday + _td(days=i) for i in range(7)]
 
     day_tasks = list(Task.objects.filter(user=user, done=False, due_date=selected).order_by('energy_cost'))
     day_events = list(CommunityEvent.objects.filter(date=selected))
-    overdue = list(Task.objects.filter(user=user, done=False, due_date__lt=today).order_by('due_date')) if selected == today else []
+    overdue = list(Task.objects.filter(user=user, done=False, due_date__lt=today).order_by('due_date'))
 
     slots = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'time': '',
               'meta': f'{e.get_kind_display()}' + (f' · {e.location}' if e.location else ''),
@@ -164,21 +159,15 @@ def dashboard(request):
     ]
     recs = recommend_events(user, 1)
     recommendation = {'event': recs[0][0], 'reason': recs[0][1]} if recs else None
-    show_intro = not Goal.objects.filter(user=user).exists() and not Task.objects.filter(user=user).exists()
     return render(request, 'fivenine/dashboard.html', {
         'greeting': greeting, 'name': user.username.capitalize(),
         'date_label': f'{selected:%A} · {selected.day} {selected:%B}'.upper(),
         'today': today, 'selected': selected,
-        'week_days': week_days,
-        'prev_day': (selected - _td(days=1)).isoformat(),
-        'next_day': (selected + _td(days=1)).isoformat(),
-        'prev_week': (monday - _td(days=7)).isoformat(),
-        'next_week': (monday + _td(days=7)).isoformat(),
         'slots': slots, 'overdue': overdue,
         'planned': planned, 'profile': profile,
         'eform': eform, 'recent_energy': recent_energy, 'warning': warning,
         'cap_pct': cap_pct, 'cap_note': cap_note, 'ring_off': ring_off, 'glance': glance,
-        'recommendation': recommendation, 'show_intro': show_intro,
+        'recommendation': recommendation,
     })
 
 
@@ -323,7 +312,13 @@ def event_leave(request, pk):
 
 
 def recommend_events(user, limit=3):
-    """Upcoming events scored by skill overlap + popularity. Returns [(event, reason)]."""
+    """Upcoming events scored by skill overlap + popularity. Returns [(event, reason)].
+    Cached 15 min per user (locmem) so home + community pages stay cheap."""
+    from django.core.cache import cache
+    key = f'fivenine:recs:{user.id}:{limit}'
+    hit = cache.get(key)
+    if hit is not None:
+        return hit
     profile = get_profile(user)
     skills = [s.strip().lower() for s in ((profile.skills or '') if profile else '').split(',') if s.strip()]
     upcoming = list(CommunityEvent.objects.filter(date__gte=timezone.now().date()).prefetch_related('attendees'))
@@ -341,7 +336,9 @@ def recommend_events(user, limit=3):
             reason = 'New and upcoming'
         scored.append((score, e, reason))
     scored.sort(key=lambda x: -x[0])
-    return [(e, r) for _, e, r in scored[:limit]]
+    result = [(e, r) for _, e, r in scored[:limit]]
+    cache.set(key, result, 900)
+    return result
 
 
 @login_required

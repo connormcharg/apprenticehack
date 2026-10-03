@@ -82,16 +82,28 @@ button:hover, input[type=submit]:hover { filter: brightness(1.05); }
   .topbar nav a { padding: .4rem .6rem; font-size: .82rem; }
   .wrap { padding-bottom: 6rem; }
 }
-/* Calendar */
+/* Calendar month grid: uniform fixed tiles, clickable chips */
 .cal { padding: .6rem; overflow-x: auto; }
-.cal-head, .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-head, .cal-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .cal-head span { font-size: .75rem; font-weight: 700; color: var(--muted); padding: .4rem; text-align: center; }
 .cal-week { margin-top: 4px; }
-.cal-day { min-height: 84px; background: #f4f1ff; border-radius: 10px; padding: .35rem; font-size: .8rem; }
+.cal-day { height: 108px; min-height: 108px; max-height: 108px; overflow: hidden; background: #f4f1ff; border-radius: 10px; padding: .3rem; font-size: .8rem; display: flex; flex-direction: column; gap: 2px; }
 .cal-day.empty { background: transparent; }
 .cal-day.today { outline: 2px solid var(--brand); }
-.cal-task { background: white; border-radius: 6px; padding: 1px 4px; margin-top: 2px; font-size: .72rem; }
-.cal-event { background: #e6f7ed; border-radius: 6px; padding: 1px 4px; margin-top: 2px; font-size: .72rem; }
+.cal-num { font-size: .85rem; }
+.cal-task, .cal-event { display: block; border-radius: 6px; padding: 1px 4px; font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; color: inherit; }
+.cal-task { background: white; }
+.cal-event { background: #e6f7ed; }
+/* Home day view: compact gapless chips in calendar tile style */
+.day-view { padding: .9rem; }
+.day-view-head { display: flex; align-items: baseline; justify-content: space-between; }
+.day-view-head h2 { margin: 0; font-size: 1.15rem; }
+.day-sub { font-size: .85rem; color: #b91c1c; margin: .6rem 0 .2rem; }
+.day-items { display: flex; flex-direction: column; gap: 2px; margin-top: .4rem; }
+.day-item { display: flex; align-items: center; gap: .55rem; padding: .42rem .55rem; border-radius: 8px; background: var(--tint, #f6f3ff); border-left: 4px solid var(--c, #7c5cff); text-decoration: none; color: inherit; font-size: .88rem; }
+.day-item time { min-width: 40px; font-size: .76rem; font-weight: 700; color: var(--muted); }
+.day-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-item small { margin-left: auto; color: var(--muted); white-space: nowrap; font-size: .76rem; }
 /* Chat */
 .chat-log { display: flex; flex-direction: column; gap: .5rem; max-height: 320px; overflow-y: auto; margin-bottom: .8rem; }
 .chat-log.mini { max-height: 260px; }
