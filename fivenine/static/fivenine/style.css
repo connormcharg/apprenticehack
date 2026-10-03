@@ -1,6 +1,6 @@
 /* ==========================================================================
    5-9 Planner — shared design tokens and components
-   Warm off-white, charcoal text, restrained teal accent. Light and dark
+   Warm off-white, charcoal text, restrained purple accent. Light and dark
    system preferences supported. These tokens mirror
    onboarding/static/onboarding/css/onboarding.css — keep the two in sync.
    ========================================================================== */
@@ -17,9 +17,9 @@
   --text: #23282c;
   --muted: #5c666d;
 
-  --accent: #0f766e;
-  --accent-strong: #0a5a55;
-  --accent-soft: rgba(15, 118, 110, 0.09);
+  --accent: #6d28d9;
+  --accent-strong: #5b21b6;
+  --accent-soft: rgba(109, 40, 217, 0.09);
   --on-accent: #ffffff;
 
   --border: #e2dccf;
@@ -27,8 +27,8 @@
 
   --danger: #b3261e;
   --danger-soft: rgba(179, 38, 30, 0.08);
-  --ok: #217a38;
-  --ok-soft: rgba(33, 122, 56, 0.1);
+  --ok: #6d28d9;
+  --ok-soft: rgba(109, 40, 217, 0.1);
   --warn-bg: #fdf6e3;
   --warn-border: #e3c878;
   --warn-text: #5f4b0d;
@@ -58,18 +58,18 @@
     --text: #ebe6db;
     --muted: #a9b2b6;
 
-    --accent: #63cfc7;
-    --accent-strong: #7fddd5;
-    --accent-soft: rgba(99, 207, 199, 0.14);
-    --on-accent: #062926;
+    --accent: #c4b5fd;
+    --accent-strong: #d8ccff;
+    --accent-soft: rgba(196, 181, 253, 0.14);
+    --on-accent: #2a1650;
 
     --border: #2e3539;
     --border-strong: #3d454b;
 
     --danger: #f0a49c;
     --danger-soft: rgba(240, 164, 156, 0.12);
-    --ok: #7ccf93;
-    --ok-soft: rgba(124, 207, 147, 0.13);
+    --ok: #c4b5fd;
+    --ok-soft: rgba(196, 181, 253, 0.13);
     --warn-bg: #2a2314;
     --warn-border: #6b5a26;
     --warn-text: #e8c872;
@@ -795,6 +795,7 @@ input[type="radio"] {
   padding: 0 var(--space-1);
 }
 
+.day-view-head h1,
 .day-view-head h2 {
   margin: 0;
   font-size: 1.15rem;
@@ -809,7 +810,8 @@ input[type="radio"] {
 .day-items {
   display: flex;
   flex-direction: column;
-  margin: 0;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -818,17 +820,13 @@ input[type="radio"] {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 0.7rem var(--space-1);
-  border-top: 1px solid var(--border);
+  padding: 0.7rem var(--space-3);
+  border: 1px solid var(--border);
   border-left: 4px solid var(--c, var(--accent));
-  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  border-radius: var(--radius-m);
   background: var(--tint, transparent);
   color: #23282c;
   text-decoration: none;
-}
-
-.day-items > li:first-child .task-row {
-  border-top: none;
 }
 
 .task-row:hover {
@@ -841,6 +839,10 @@ input[type="radio"] {
   font-size: 0.8rem;
   font-weight: 700;
   color: #4c565c;
+}
+
+.task-time.task-date {
+  width: 4.25rem;
 }
 
 .task-main {
@@ -882,15 +884,15 @@ a.task-row .task-dur {
 
 /* Category tints (opaque so rows stay readable in both modes) */
 
-.slot-t-goal { --c: #6a5ae0; --tint: #efecfd; }
-.slot-t-chore { --c: #2f9e44; --tint: #e9f6ec; }
-.slot-t-study { --c: #2b7cd3; --tint: #e9f1fc; }
-.slot-t-rest { --c: #8a7f6a; --tint: #f1ece2; }
-.slot-t-social { --c: #d6336c; --tint: #fceaf1; }
-.slot-e-hackathon { --c: #6a5ae0; --tint: #efecfd; }
-.slot-e-social { --c: #d6336c; --tint: #fceaf1; }
-.slot-e-multi-company { --c: #2b7cd3; --tint: #e9f1fc; }
-.slot-e-learning { --c: #dd7e0b; --tint: #fdf1e0; }
+.slot-t-goal { --c: #7c3aed; --tint: #f1eafe; }
+.slot-t-chore { --c: #57534e; --tint: #eceae6; }
+.slot-t-study { --c: #8b5cf6; --tint: #efe9fd; }
+.slot-t-rest { --c: #78716c; --tint: #f1ede9; }
+.slot-t-social { --c: #a855f7; --tint: #f5eafe; }
+.slot-e-hackathon { --c: #7c3aed; --tint: #f1eafe; }
+.slot-e-social { --c: #a855f7; --tint: #f5eafe; }
+.slot-e-multi-company { --c: #6d6d6d; --tint: #ededeb; }
+.slot-e-learning { --c: #9333ea; --tint: #f3e8fd; }
 .slot-overdue { --c: #b3261e; --tint: #fbe9e7; }
 
 /* Goals ------------------------------------------------------------------ */
@@ -954,15 +956,15 @@ a.task-row .task-dur {
 .check.on {
   background: var(--ok);
   border-color: var(--ok);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .check.on::after {
   content: "";
   width: 12px;
   height: 7px;
-  border-left: 3px solid #fff;
-  border-bottom: 3px solid #fff;
+  border-left: 3px solid var(--on-accent);
+  border-bottom: 3px solid var(--on-accent);
   transform: rotate(-45deg) translateY(-1px);
 }
 

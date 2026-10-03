@@ -106,6 +106,18 @@ def dashboard(request):
                'right': f'{t.minutes}m', 'toggle': t.pk} for t in day_tasks]
     slots.sort(key=lambda s: (s['time'] == '', s['time']))
 
+    future_tasks = Task.objects.filter(user=user, done=False, due_date__gt=today).order_by('due_date', 'start_time')
+    future_events = CommunityEvent.objects.filter(date__gt=today).order_by('date')
+    upcoming = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'date': e.date,
+                 'meta': f'{e.get_kind_display()}' + (f' · {e.location}' if e.location else ''),
+                 'right': '', 'toggle': None, 'event_id': e.pk} for e in future_events]
+    upcoming += [{'css': f'slot-t-{t.kind}', 'title': t.title, 'date': t.due_date,
+                  'meta': f'{t.get_kind_display()} · {t.minutes} min' + (f' · {t.goal.title}' if t.goal else ''),
+                  'right': f'{t.start_time:%H:%M}' if t.start_time else f'{t.minutes}m',
+                  'toggle': t.pk, 'event_id': None} for t in future_tasks]
+    upcoming.sort(key=lambda s: (s['date'], s['right'] if ':' in s['right'] else '99:99'))
+    upcoming = upcoming[:2]
+
     planned = sum(t.minutes for t in day_tasks)
     profile = get_profile(user)
     recent_energy = EnergyLog.objects.filter(user=user)[:3]
@@ -141,15 +153,21 @@ def dashboard(request):
     ]
     recs = recommend_events(user, 1)
     recommendation = {'event': recs[0][0], 'reason': recs[0][1]} if recs else None
+    from .models import goal_progress
+    goal_cards = []
+    for g in Goal.objects.filter(user=user, done=False).order_by('target_date')[:3]:
+        done, total = goal_progress(g)
+        goal_cards.append({'goal': g, 'done': done, 'total': total,
+                           'pct': round(100 * done / total) if total else 0})
     return render(request, 'fivenine/dashboard.html', {
         'greeting': greeting, 'name': display_name_for(user),
         'date_label': f'{selected:%A} · {selected.day} {selected:%B}'.upper(),
         'today': today, 'selected': selected,
-        'slots': slots, 'overdue': overdue,
+        'slots': slots, 'overdue': overdue, 'upcoming': upcoming,
         'planned': planned, 'profile': profile,
         'eform': eform, 'recent_energy': recent_energy, 'warning': warning,
         'cap_pct': cap_pct, 'cap_note': cap_note, 'ring_off': ring_off, 'glance': glance,
-        'recommendation': recommendation,
+        'recommendation': recommendation, 'goal_cards': goal_cards,
     })
 
 
