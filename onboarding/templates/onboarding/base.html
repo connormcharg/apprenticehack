@@ -1,0 +1,42 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#eef2ff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)">
+    <meta name="description" content="Onboarding for apprentices — tell us who you are and what you work with.">
+    <title>{% block title %}ApprenticeHack{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'onboarding/css/onboarding.css' %}">
+    <script>document.documentElement.classList.add('js');</script>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <div class="page">
+      <header class="page__header">
+        <a class="brand" href="{% url 'home' %}">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M13.6 2 4.8 13.4h5.3L9.2 22l9.6-11.9h-5.9L13.6 2Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="brand__name">ApprenticeHack</span>
+        </a>
+        {% if user.is_authenticated %}
+          <form class="signout" method="post" action="{% url 'onboarding:sign_out' %}">
+            {% csrf_token %}
+            <button type="submit" class="signout__button">Sign out</button>
+          </form>
+        {% endif %}
+      </header>
+
+      <main class="page__main" id="main">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="page__footer">
+        <p>{% block footer_note %}Built by apprentices, for apprentices.{% endblock %}</p>
+      </footer>
+    </div>
+  </body>
+</html>

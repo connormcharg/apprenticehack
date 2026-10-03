@@ -1,0 +1,69 @@
+{% extends "onboarding/base.html" %}
+
+{% block title %}You're all set · ApprenticeHack{% endblock %}
+
+{% block content %}
+<section class="card" aria-labelledby="welcome-title">
+  <p class="eyebrow">You&rsquo;re all set</p>
+  <h1 class="card__title" id="welcome-title">Nice to meet you, {{ apprentice.first_name }}.</h1>
+  <p class="lede">Here&rsquo;s what we&rsquo;ve noted down. You can change any of it whenever you like.</p>
+
+  <dl class="summary">
+    <div class="summary__row">
+      <dt>Name</dt>
+      <dd>{{ apprentice.name }}</dd>
+    </div>
+    <div class="summary__row">
+      <dt>Email</dt>
+      <dd><a class="link" href="mailto:{{ apprentice.email }}">{{ apprentice.email }}</a></dd>
+    </div>
+    <div class="summary__row">
+      <dt>Company</dt>
+      <dd>{{ apprentice.company }}</dd>
+    </div>
+    <div class="summary__row">
+      <dt>Based in</dt>
+      <dd>{{ apprentice.location }}</dd>
+    </div>
+    <div class="summary__row">
+      <dt>Working with</dt>
+      <dd class="chip-list">
+        {% for technology in apprentice.technologies.all %}
+          <span class="chip chip--static">{{ technology.name }}</span>
+        {% empty %}
+          <span class="muted">Nothing yet</span>
+        {% endfor %}
+      </dd>
+    </div>
+    <div class="summary__row">
+      <dt>Working hours</dt>
+      <dd>
+        {% if apprentice.has_working_hours %}
+          {{ apprentice.work_start|time:"H:i" }} &ndash; {{ apprentice.work_end|time:"H:i" }}
+          <span class="muted">{{ apprentice.work_hours|floatformat:"-1" }} hours a day</span>
+        {% else %}
+          <span class="muted">Not set yet</span>
+        {% endif %}
+      </dd>
+    </div>
+    <div class="summary__row">
+      <dt>Free time</dt>
+      <dd>
+        {% if apprentice.free_time_hours is not None %}
+          {{ apprentice.free_time_hours|floatformat:"-1" }} hours a day, free of activities
+        {% else %}
+          <span class="muted">Not set yet</span>
+        {% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  <div class="actions">
+    <a class="button button--primary" href="{% url 'onboarding:about_you' %}">Edit my details</a>
+    <a class="button button--ghost" href="{% url 'onboarding:hours' %}">
+      {% if apprentice.has_working_hours %}Edit my hours{% else %}Add my hours{% endif %}
+    </a>
+    <span class="actions__note">Saved {{ apprentice.updated_at|date:"j M Y, H:i" }}</span>
+  </div>
+</section>
+{% endblock %}

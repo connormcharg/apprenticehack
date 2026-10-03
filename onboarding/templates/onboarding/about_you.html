@@ -1,0 +1,93 @@
+{% extends "onboarding/base.html" %}
+{% load static %}
+
+{% block title %}Step 1 · ApprenticeHack{% endblock %}
+
+{% block extra_head %}
+  <script src="{% static 'onboarding/js/onboarding.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<section class="card" aria-labelledby="onboarding-title">
+  <p class="eyebrow">Step 1 of 2 &middot; About you</p>
+  <div class="progress" role="progressbar" aria-valuenow="1" aria-valuemin="0"
+       aria-valuemax="2" aria-label="Step 1 of 2">
+    <span class="progress__bar progress__bar--half"></span>
+  </div>
+  <h1 class="card__title" id="onboarding-title">Let&rsquo;s fill in the blanks.</h1>
+
+  {% if form.errors %}
+    <div class="alert" role="alert">
+      <p class="alert__title">We couldn&rsquo;t save that just yet:</p>
+      <ul class="alert__list">
+        {% for field in form %}
+          {% for error in field.errors %}
+            <li><a href="#{{ field.id_for_label }}" data-focus>{{ error }}</a></li>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form class="sentence-form" method="post" novalidate
+        data-onboarding-form
+        data-suggestions="Python, JavaScript, TypeScript, SQL, React, Django, Node.js, Git, Docker, AWS, Figma, Excel">
+    {% csrf_token %}
+
+    <p class="sentence">
+      Hi, my name is
+      <span class="blank">
+        <label class="sr-only" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% include "onboarding/_blank_errors.html" with field=form.name %}
+      </span>.
+      I&rsquo;m an apprentice at
+      <span class="blank">
+        <label class="sr-only" for="{{ form.company.id_for_label }}">{{ form.company.label }}</label>
+        {{ form.company }}
+        {% include "onboarding/_blank_errors.html" with field=form.company %}
+      </span>
+      in
+      <span class="blank">
+        <label class="sr-only" for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>
+        {{ form.city }}
+        {% include "onboarding/_blank_errors.html" with field=form.city %}
+      </span>,
+      <span class="blank">
+        <label class="sr-only" for="{{ form.country.id_for_label }}">{{ form.country.label }}</label>
+        {{ form.country }}
+        {% include "onboarding/_blank_errors.html" with field=form.country %}
+      </span>,
+      working with
+      <span class="blank blank--tokens" tabindex="-1">
+        <label class="sr-only" for="{{ form.technologies.id_for_label }}">{{ form.technologies.label }}</label>
+        {{ form.technologies }}
+        {% include "onboarding/_blank_errors.html" with field=form.technologies %}
+      </span>.
+    </p>
+
+    <p class="hint js-only">
+      Press <kbd>Enter</kbd> or a comma after each technology.
+    </p>
+
+    <div class="suggestions" data-suggestions-panel hidden>
+      <span class="suggestions__label" id="suggestions-label">Quick add</span>
+      <span class="suggestions__list" data-suggestions-list aria-labelledby="suggestions-label"></span>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="button button--primary">
+        Continue
+        <svg class="button__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+          <path d="M3.5 10h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <span class="actions__note">Next: your working hours.</span>
+    </div>
+  </form>
+</section>
+{% endblock %}
