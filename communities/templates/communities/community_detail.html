@@ -1,0 +1,95 @@
+{% extends 'fivenine/base.html' %}
+{% block title %}{{ community.name }} · Communities{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ community.name }}</h1>
+<p class="page-sub">
+  {% if community.company %}{{ community.company }}{% endif %}
+  {% if community.location %}{% if community.company %} · {% endif %}{{ community.location }}{% endif %}
+  · {{ community.member_count }} member{{ community.member_count|pluralize }}
+</p>
+
+<div class="card">
+  {% if community.description %}<p>{{ community.description }}</p>{% endif %}
+  {% if community.technologies.all %}
+  <p>{% for tech in community.technologies.all %}<span class="badge">{{ tech.name }}</span> {% endfor %}</p>
+  {% endif %}
+  <p class="muted">Created by {{ creator_name }}</p>
+
+  {% if is_member %}
+    {% if is_owner %}
+      <p class="muted">You created this community.</p>
+    {% else %}
+      <form method="post" action="{% url 'communities:leave' community.pk %}">{% csrf_token %}<input type="submit" value="Leave community"></form>
+    {% endif %}
+  {% else %}
+    <form method="post" action="{% url 'communities:join' community.pk %}">{% csrf_token %}<input type="submit" value="Join community"></form>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Members</h3>
+  <p>
+    {% for member in members %}
+      <span class="badge">{{ member.name }}</span>
+    {% empty %}
+      <span class="muted">No members yet.</span>
+    {% endfor %}
+  </p>
+</div>
+
+<div class="card">
+  <div class="row">
+    <h3>Upcoming events</h3>
+    {% if is_member %}<a href="{% url 'communities:event_create' community.pk %}">Add an event</a>{% endif %}
+  </div>
+  {% for event in upcoming_events %}
+  <p>
+    <span class="badge">{{ event.starts_at|date:"D j M, H:i" }}</span><br>
+    <strong>{{ event.title }}</strong>{% if event.location %} <small>· {{ event.location }}</small>{% endif %}<br>
+    {% if event.description %}{{ event.description }}<br>{% endif %}
+    <small>{{ event.attendee_count }} going</small>
+  </p>
+  {% if event.pk in my_event_ids %}
+    <form method="post" action="{% url 'communities:event_leave' event.pk %}">{% csrf_token %}<input type="submit" value="Can't make it"></form>
+  {% else %}
+    <form method="post" action="{% url 'communities:event_join' event.pk %}">{% csrf_token %}<input type="submit" value="I'm going"></form>
+  {% endif %}
+  {% empty %}
+  <p class="muted">Nothing planned yet.{% if is_member %} Add the first event.{% endif %}</p>
+  {% endfor %}
+</div>
+
+{% if past_events %}
+<div class="card">
+  <h3>Past events</h3>
+  {% for event in past_events %}
+  <p class="muted">{{ event.starts_at|date:"j M Y" }} · {{ event.title }} · {{ event.attendee_count }} went</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Chat</h3>
+  <div class="chat-log">
+    {% for message in messages %}
+    <div class="chat-msg {% if message.is_me %}user{% else %}bot{% endif %}">
+      <strong>{{ message.author_name }}</strong><br>{{ message.body }}
+      <br><small>{{ message.created_at|date:"j M, H:i" }}</small>
+    </div>
+    {% empty %}
+    <p class="muted">No messages yet.{% if is_member %} Say hello!{% endif %}</p>
+    {% endfor %}
+  </div>
+  {% if is_member %}
+  <form class="chat-form" method="post" action="{% url 'communities:message_create' community.pk %}">
+    {% csrf_token %}
+    {{ message_form.body }}
+    <button type="submit" aria-label="Send"><i class="ph-bold ph-paper-plane-tilt"></i></button>
+  </form>
+  {% else %}
+  <p class="muted">Join the community to join the chat.</p>
+  {% endif %}
+</div>
+
+<p><a href="{% url 'communities:list' %}">Back to all communities</a></p>
+{% endblock %}

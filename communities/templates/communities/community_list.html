@@ -1,0 +1,94 @@
+{% extends 'fivenine/base.html' %}
+{% block title %}Communities · 5-9 Planner{% endblock %}
+{% block content %}
+<h1 class="page-title">Communities</h1>
+<p class="page-sub">Find apprentices at your company, in your town or working with your stack — then meet up and chat.</p>
+
+{% if created %}
+  <p><a class="cta" href="{% url 'communities:detail' created.pk %}">Go to my community: {{ created.name }}</a></p>
+{% else %}
+  <p><a class="cta" href="{% url 'communities:create' %}">Create a community</a></p>
+{% endif %}
+
+{% if recommended %}
+<div class="card">
+  <h3>Recommended for you</h3>
+  {% for community, reasons in recommended %}
+  <p>
+    <strong><a href="{% url 'communities:detail' community.pk %}">{{ community.name }}</a></strong>
+    <small>— {{ reasons|join:", " }}</small><br>
+    <small>{% if community.location %}{{ community.location }}{% endif %}{% if community.company %} · {{ community.company }}{% endif %}</small>
+  </p>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Filter</h3>
+  <form method="get">
+    <label for="filter-q">Search</label>
+    <input id="filter-q" type="search" name="q" value="{{ filters.q }}" placeholder="Name or description">
+
+    <label for="filter-company">Company</label>
+    <select id="filter-company" name="company">
+      <option value="">Any company</option>
+      {% for value in companies %}
+      <option value="{{ value }}" {% if filters.company == value %}selected{% endif %}>{{ value }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="filter-city">Town or city</label>
+    <select id="filter-city" name="city">
+      <option value="">Anywhere</option>
+      {% for value in cities %}
+      <option value="{{ value }}" {% if filters.city == value %}selected{% endif %}>{{ value }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="filter-country">Country</label>
+    <select id="filter-country" name="country">
+      <option value="">Any country</option>
+      {% for value in countries %}
+      <option value="{{ value }}" {% if filters.country == value %}selected{% endif %}>{{ value }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="filter-technology">Skill</label>
+    <select id="filter-technology" name="technology">
+      <option value="">Any skill</option>
+      {% for tech in technologies %}
+      <option value="{{ tech.key }}" {% if filters.technology == tech.key %}selected{% endif %}>{{ tech.name }}</option>
+      {% endfor %}
+    </select>
+
+    {% if filters.scope %}<input type="hidden" name="scope" value="{{ filters.scope }}">{% endif %}
+    <input type="submit" value="Apply filters">
+  </form>
+</div>
+
+<p>
+  <a class="badge" href="{% url 'communities:list' %}" {% if not filters.scope %}style="background:#4f46e5;color:white"{% endif %}>All</a>
+  <a class="badge" href="?scope=joined" {% if filters.scope == 'joined' %}style="background:#4f46e5;color:white"{% endif %}>Joined</a>
+  <a class="badge" href="?scope=mine" {% if filters.scope == 'mine' %}style="background:#4f46e5;color:white"{% endif %}>Created by me</a>
+</p>
+
+{% for community in communities %}
+<div class="card">
+  <p>
+    <strong><a href="{% url 'communities:detail' community.pk %}">{{ community.name }}</a></strong>
+    {% if community.company %}<span class="badge">{{ community.company }}</span>{% endif %}
+    {% if community.location %}<span class="badge">{{ community.location }}</span>{% endif %}
+    <br>
+    {% if community.description %}{{ community.description }}<br>{% endif %}
+    <small>{{ community.member_count }} member{{ community.member_count|pluralize }}{% if community.technologies.all %} · {% for tech in community.technologies.all %}{{ tech.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</small>
+  </p>
+  {% if community.pk in my_ids %}
+    <a href="{% url 'communities:detail' community.pk %}">Open</a>
+  {% else %}
+    <form method="post" action="{% url 'communities:join' community.pk %}">{% csrf_token %}<input type="submit" value="Join"></form>
+  {% endif %}
+</div>
+{% empty %}
+<div class="card"><p class="muted">No communities match those filters yet. Try clearing them, or create one.</p></div>
+{% endfor %}
+{% endblock %}

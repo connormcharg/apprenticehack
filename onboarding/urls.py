@@ -12,5 +12,6 @@ urlpatterns = [
     # Onboarding
     path("", views.about_you, name="about_you"),
     path("hours/", views.hours, name="hours"),
+    path("quiz/", views.quiz, name="quiz"),
     path("welcome/", views.welcome, name="welcome"),
 ]

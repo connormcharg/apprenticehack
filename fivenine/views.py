@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .forms import EnergyForm, EventForm, GoalForm, PlanForm, QuizForm, SignupForm, TaskForm
+from .forms import EnergyForm, EventForm, GoalForm, PlanForm, SignupForm, TaskForm
 from .models import CommunityEvent, EnergyLog, EventAttendee, Goal, Task, UserProfile
 
 
@@ -34,32 +34,14 @@ def signup(request):
         user = form.save()
         login(request, user)
         messages.success(request, 'Account created! Quick quiz so we can tailor your 5-9.')
-        return redirect('quiz')
+        return redirect('onboarding:quiz')
     return render(request, 'fivenine/signup.html', {'form': form})
 
 
 @login_required
 def quiz(request):
-    """First-login quiz: person type + time commitment + company/skills/location."""
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
-    first_time = not profile.quiz_done
-    form = QuizForm(request.POST or None, instance=profile)
-    if request.method == 'POST' and form.is_valid():
-        profile = form.save(commit=False)
-        profile.quiz_done = True
-        profile.save()
-        if first_time:
-            for line in (form.cleaned_data.get('weekly_tasks') or '').splitlines():
-                title = line.strip().lstrip('-*• ').strip()
-                if title and not Task.objects.filter(user=request.user, title__iexact=title).exists():
-                    Task.objects.create(user=request.user, title=title, kind='chore', minutes=30, energy_cost=1)
-            first_goal = (form.cleaned_data.get('first_goal') or '').strip()
-            if first_goal and not Goal.objects.filter(user=request.user, title__iexact=first_goal).exists():
-                Goal.objects.create(user=request.user, title=first_goal,
-                                    category=form.cleaned_data.get('first_goal_category') or 'career')
-        messages.success(request, 'All set! Here is your 5-9.')
-        return redirect('dashboard')
-    return render(request, 'fivenine/quiz.html', {'form': form})
+    """The quiz now lives in the onboarding flow — send people there."""
+    return redirect('onboarding:quiz')
 
 
 def needs_quiz(user):
@@ -91,7 +73,7 @@ def dashboard(request):
     """Home: greeting + week strip + selected-day schedule + energy check-in."""
     from datetime import date as _date, timedelta as _td
     if needs_quiz(request.user):
-        return redirect('quiz')
+        return redirect('onboarding:quiz')
     user = request.user
     today = timezone.now().date()
     day_param = request.GET.get('day', '')

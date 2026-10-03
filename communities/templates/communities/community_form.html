@@ -1,0 +1,16 @@
+{% extends 'fivenine/base.html' %}
+{% block title %}Create a community · 5-9 Planner{% endblock %}
+{% block content %}
+<h1 class="page-title">Create a community</h1>
+<p class="page-sub">You can create one community. Fill in as much as you like — company, location and skills help the right apprentices find it.</p>
+
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Create community">
+  </form>
+</div>
+
+<p><a href="{% url 'communities:list' %}">Back to all communities</a></p>
+{% endblock %}
