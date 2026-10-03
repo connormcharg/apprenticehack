@@ -1,8 +1,8 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
-<h1 class="page-title">Tonight's plan 🌙</h1>
+<h1 class="page-title">Tonight's plan</h1>
 <p class="page-sub">Tell us your time + energy — we'll keep it realistic.</p>
 <div class="card"><form method="get">{{ form.as_p }}<input type="submit" value="Generate plan"></form></div>
 {% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
-{% if form.is_valid %}<div class="card"><h3>Suggested ({{ total }}m / {{ cap }}m cap)</h3>{% for t in picked %}<p><span class="badge {% if t.kind == 'rest' %}rest{% endif %}">{{ t.get_kind_display }} · {{ t.minutes }}m</span><br>☐ <strong>{{ t.title }}</strong> <small>· energy {{ t.energy_cost }}</small> <a href="{% url 'task_toggle' t.pk %}?next=evening_plan">Done</a></p>{% empty %}<p>Nothing fits — add lighter tasks or take a rest night. That's allowed. 🛋️</p>{% endfor %}</div>{% endif %}
+{% if form.is_valid %}<div class="card"><h3>Suggested ({{ total }}m / {{ cap }}m cap)</h3>{% for t in picked %}<p><span class="badge {% if t.kind == 'rest' %}rest{% endif %}">{{ t.get_kind_display }} · {{ t.minutes }}m</span><br><strong>{{ t.title }}</strong> <small>· energy {{ t.energy_cost }}</small> <a href="{% url 'task_toggle' t.pk %}?next=evening_plan">Done</a></p>{% empty %}<p>Nothing fits — add lighter tasks or take a rest night. That's allowed.</p>{% endfor %}</div>{% endif %}
 {% endblock %}

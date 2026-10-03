@@ -1,7 +1,0 @@
-{% extends 'fivenine/base.html' %}
-{% block content %}
-<h1 class="page-title">Tasks 🧹</h1>
-<p class="page-sub">Household, study, goal steps and rest — each with a time + energy cost.</p>
-<div class="card"><form method="post">{% csrf_token %}{{ form.as_p }}<input type="submit" value="Add task"></form></div>
-{% for t in tasks %}<div class="card"><p><span class="badge {% if t.kind == 'rest' %}rest{% endif %}">{{ t.get_kind_display }} · {{ t.minutes }}m · ⚡{{ t.energy_cost }}</span><br><strong>{% if t.done %}✅{% else %}☐{% endif %} {{ t.title }}</strong>{% if t.goal %} <small>· {{ t.goal.title }}</small>{% endif %}{% if t.due_date %} <small>· due {{ t.due_date }}</small>{% endif %}<br><a href="{% url 'task_toggle' t.pk %}?next=task_list">{% if t.done %}Reopen{% else %}Done{% endif %}</a></p></div>{% endfor %}
-{% endblock %}

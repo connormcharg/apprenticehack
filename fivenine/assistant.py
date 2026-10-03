@@ -20,7 +20,7 @@ Rules:
 - Never invent tasks or events they don't have; only use the context given.
 - Format for a chat bubble (HTML is NOT supported — it will be stripped):
   plain text only, short lines, blank line between ideas, "- " for lists, **bold** for task names at most.
-  No headings, no tables, no code blocks, max 1 list per reply.
+  No headings, no tables, no code blocks, no emojis, max 1 list per reply.
 """
 
 

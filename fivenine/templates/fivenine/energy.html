@@ -1,7 +1,0 @@
-{% extends 'fivenine/base.html' %}
-{% block content %}
-<h1 class="page-title">Energy ⚡</h1>
-<p class="page-sub">Low scores cap tonight's plan — that's the burnout guard.</p>
-<div class="card"><form method="post">{% csrf_token %}{{ form.as_p }}<input type="submit" value="Log"></form></div>
-<div class="card"><h3>Recent {% if avg %}(avg {{ avg|floatformat:1 }}/5){% endif %}</h3>{% for l in logs %}<p>{{ l.date }} — <strong>{{ l.level }}/5</strong> {% if l.note %}— {{ l.note }}{% endif %}</p>{% empty %}<p class="muted">No logs yet.</p>{% endfor %}</div>
-{% endblock %}

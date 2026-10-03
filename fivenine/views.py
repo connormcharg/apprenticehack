@@ -5,7 +5,6 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles import finders
-from django.db.models import Avg
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -34,7 +33,7 @@ def signup(request):
     if request.method == 'POST' and form.is_valid():
         user = form.save()
         login(request, user)
-        messages.success(request, 'Account created! Quick quiz so we can tailor your 5-9. 🌙')
+        messages.success(request, 'Account created! Quick quiz so we can tailor your 5-9.')
         return redirect('quiz')
     return render(request, 'fivenine/signup.html', {'form': form})
 
@@ -48,7 +47,7 @@ def quiz(request):
         profile = form.save(commit=False)
         profile.quiz_done = True
         profile.save()
-        messages.success(request, 'All set! Here is your 5-9. 🌙')
+        messages.success(request, 'All set! Here is your 5-9.')
         return redirect('dashboard')
     return render(request, 'fivenine/quiz.html', {'form': form})
 
@@ -79,32 +78,88 @@ def burnout_warning(user):
 
 @login_required
 def dashboard(request):
+    """Home: greeting + week strip + selected-day schedule + energy check-in."""
+    from datetime import date as _date, timedelta as _td
     if needs_quiz(request.user):
         return redirect('quiz')
     user = request.user
+    today = timezone.now().date()
+    day_param = request.GET.get('day', '')
+    try:
+        selected = _date.fromisoformat(day_param) if day_param else today
+    except ValueError:
+        selected = today
+
+    if request.method == 'POST':
+        eform = EnergyForm(request.POST)
+        if eform.is_valid():
+            entry = eform.save(commit=False)
+            entry.user = user
+            entry.save()
+            messages.success(request, 'Energy logged.')
+            return redirect(f'/?day={selected.isoformat()}')
+    else:
+        eform = EnergyForm(initial={'date': today, 'level': 3})
+
+    hour = timezone.now().hour
+    greeting = 'Good morning' if hour < 12 else 'Good afternoon' if hour < 18 else 'Good evening'
+    monday = selected - _td(days=selected.weekday())
+    week_days = [monday + _td(days=i) for i in range(7)]
+
+    day_tasks = list(Task.objects.filter(user=user, done=False, due_date=selected).order_by('energy_cost'))
+    day_events = list(CommunityEvent.objects.filter(date=selected))
+    overdue = list(Task.objects.filter(user=user, done=False, due_date__lt=today).order_by('due_date')) if selected == today else []
+
+    slots = [{'css': f'slot-e-{e.kind}', 'title': e.title,
+              'meta': f'{e.get_kind_display()}' + (f' · {e.location}' if e.location else ''),
+              'toggle': None} for e in day_events]
+    slots += [{'css': f'slot-t-{t.kind}', 'title': t.title,
+               'meta': f'{t.get_kind_display()} · {t.minutes} min' + (f' · {t.goal.title}' if t.goal else ''),
+               'toggle': t.pk} for t in day_tasks]
+
+    planned = sum(t.minutes for t in day_tasks)
     profile = get_profile(user)
-    goals = Goal.objects.filter(user=user, done=False).order_by('target_date')[:6]
-    tasks = Task.objects.filter(user=user, done=False).order_by('due_date')[:8]
-    energy = EnergyLog.objects.filter(user=user).first()
-    events = CommunityEvent.objects.filter(date__gte=timezone.now().date()).order_by('date')[:5]
+    recent_energy = EnergyLog.objects.filter(user=user)[:3]
     warning = burnout_warning(user)
-    feed_url = request.build_absolute_uri(f'/calendar/feed-{profile.calendar_token}.ics') if profile else None
     return render(request, 'fivenine/dashboard.html', {
-        'goals': goals, 'tasks': tasks, 'energy': energy,
-        'events': events, 'warning': warning, 'profile': profile, 'feed_url': feed_url,
+        'greeting': greeting, 'name': user.username.capitalize(),
+        'date_label': f'{selected:%A} · {selected.day} {selected:%B}'.upper(),
+        'today': today, 'selected': selected,
+        'week_days': week_days,
+        'prev_day': (selected - _td(days=1)).isoformat(),
+        'next_day': (selected + _td(days=1)).isoformat(),
+        'prev_week': (monday - _td(days=7)).isoformat(),
+        'next_week': (monday + _td(days=7)).isoformat(),
+        'slots': slots, 'overdue': overdue,
+        'planned': planned, 'profile': profile,
+        'eform': eform, 'recent_energy': recent_energy, 'warning': warning,
     })
 
 
 @login_required
 def goal_list(request):
-    goals = Goal.objects.filter(user=request.user).order_by('done', 'target_date')
-    form = GoalForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        goal = form.save(commit=False)
-        goal.user = request.user
-        goal.save()
-        return redirect('goal_list')
-    return render(request, 'fivenine/goals.html', {'goals': goals, 'form': form})
+    """Goals + tasks on one page."""
+    user = request.user
+    goals = Goal.objects.filter(user=user).order_by('done', 'target_date')
+    tasks = Task.objects.filter(user=user).order_by('done', 'due_date')
+    is_post = request.method == 'POST'
+    form_type = request.POST.get('form_type', 'goal') if is_post else 'goal'
+    goal_form = GoalForm(request.POST if is_post and form_type == 'goal' else None)
+    task_form = TaskForm(request.POST if is_post and form_type == 'task' else None)
+    task_form.fields['goal'].queryset = Goal.objects.filter(user=user, done=False)
+    if is_post:
+        if form_type == 'task' and task_form.is_valid():
+            task = task_form.save(commit=False)
+            task.user = user
+            task.save()
+            return redirect('goal_list')
+        elif form_type == 'goal' and goal_form.is_valid():
+            goal = goal_form.save(commit=False)
+            goal.user = user
+            goal.save()
+            return redirect('goal_list')
+    return render(request, 'fivenine/goals.html',
+                  {'goals': goals, 'tasks': tasks, 'goal_form': goal_form, 'task_form': task_form})
 
 
 @login_required
@@ -116,37 +171,11 @@ def goal_toggle(request, pk):
 
 
 @login_required
-def task_list(request):
-    tasks = Task.objects.filter(user=request.user).order_by('done', 'due_date')
-    form = TaskForm(request.POST or None)
-    form.fields['goal'].queryset = Goal.objects.filter(user=request.user, done=False)
-    if request.method == 'POST' and form.is_valid():
-        task = form.save(commit=False)
-        task.user = request.user
-        task.save()
-        return redirect('task_list')
-    return render(request, 'fivenine/tasks.html', {'tasks': tasks, 'form': form})
-
-
-@login_required
 def task_toggle(request, pk):
     task = get_object_or_404(Task, pk=pk, user=request.user)
     task.done = not task.done
     task.save()
-    return redirect(request.GET.get('next', 'task_list'))
-
-
-@login_required
-def energy_log(request):
-    logs = EnergyLog.objects.filter(user=request.user)[:14]
-    avg = EnergyLog.objects.filter(user=request.user).aggregate(Avg('level'))['level__avg']
-    form = EnergyForm(request.POST or None, initial={'date': timezone.now().date(), 'level': 3})
-    if request.method == 'POST' and form.is_valid():
-        entry = form.save(commit=False)
-        entry.user = request.user
-        entry.save()
-        return redirect('energy_log')
-    return render(request, 'fivenine/energy.html', {'logs': logs, 'form': form, 'avg': avg})
+    return redirect(request.GET.get('next', 'dashboard'))
 
 
 def build_plan(user, minutes_available, energy_level):
@@ -285,13 +314,6 @@ def ics_feed(request, token):
     return HttpResponse('\r\n'.join(lines), content_type='text/calendar')
 
 
-@login_required
-def assistant_page(request):
-    return render(request, 'fivenine/assistant.html', {
-        'has_key': bool(settings.OPENROUTER_API_KEY),
-    })
-
-
 @csrf_exempt
 def assistant_api(request):
     """POST JSON {message, history:[{role,content}]} -> {reply} or {error}."""
@@ -311,7 +333,7 @@ def assistant_api(request):
     history = [m for m in data.get('history', []) if m.get('role') in ('user', 'assistant') and m.get('content')][:10]
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'login',
-                             'reply': 'Log in first and I can see your goals, tasks and energy. 🔑'})
+                             'reply': 'Log in first and I can see your goals, tasks and energy.'})
     if not settings.OPENROUTER_API_KEY:
         return JsonResponse({'error': 'no-key',
                              'reply': 'No OpenRouter key yet — copy .env.example to .env and add your OPENROUTER_API_KEY, then restart the server.'})

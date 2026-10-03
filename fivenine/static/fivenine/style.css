@@ -122,3 +122,43 @@ button:hover, input[type=submit]:hover { filter: brightness(1.05); }
 .chat-msg ul, .chat-msg ol { margin: .3rem 0; padding-left: 1.2rem; }
 .chat-msg li { margin: .15rem 0; }
 .chat-msg code { background: rgba(0,0,0,.08); border-radius: 5px; padding: 0 .3rem; font-size: .85em; }
+/* Home: greeting + week + day schedule */
+.date-eyebrow { color: #cfc6ec; font-weight: 700; letter-spacing: .12em; font-size: .8rem; margin: 1.4rem 0 .2rem; }
+.greet-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.greet { color: white; margin: 0; font-size: clamp(1.7rem, 4vw, 2.4rem); letter-spacing: -0.02em; }
+.greet-sub { color: #cfc6ec; margin: .3rem 0 1rem; }
+.day-card { padding: 1.2rem; }
+.week-head { display: flex; align-items: center; justify-content: space-between; }
+.week-head h2 { margin: 0; font-size: 1.15rem; }
+.week-nav { display: flex; gap: .4rem; }
+.week-nav a { text-decoration: none; background: #f1edff; color: var(--ink); font-weight: 700; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+.week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: .9rem 0 .5rem; }
+.week-day { text-decoration: none; color: var(--ink); text-align: center; padding: .55rem .1rem; border-radius: 12px; display: flex; flex-direction: column; gap: 2px; }
+.week-day span { font-size: .68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+.week-day strong { font-size: 1.05rem; }
+.week-day.selected { background: #efe9ff; }
+.week-day.selected strong, .week-day.selected span { color: #5b3df0; }
+.week-day.is-today strong { text-decoration: underline; }
+.day-nav { display: flex; gap: 1rem; margin: .2rem 0 .8rem; font-size: .85rem; }
+.slots { display: flex; flex-direction: column; gap: 0; border-top: 1px solid #eeeafc; }
+.slot { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .8rem .9rem; border-bottom: 1px solid #eeeafc; border-left: 4px solid var(--c, #7c5cff); background: var(--tint, #f6f3ff); border-radius: 0 12px 12px 0; margin-top: .6rem; }
+.slot-main strong { display: block; }
+.slot-main small { color: var(--muted); }
+.slot-done { font-size: .8rem; font-weight: 700; color: var(--brand); white-space: nowrap; }
+.slot-t-goal { --c: #7c5cff; --tint: #f1edff; }
+.slot-t-chore { --c: #16a34a; --tint: #eafaf0; }
+.slot-t-study { --c: #2563eb; --tint: #e8f0fe; }
+.slot-t-rest { --c: #78716c; --tint: #f5f4f4; }
+.slot-t-social { --c: #db2777; --tint: #fdeef5; }
+.slot-e-hackathon { --c: #7c5cff; --tint: #f1edff; }
+.slot-e-social { --c: #db2777; --tint: #fdeef5; }
+.slot-e-multi-company { --c: #2563eb; --tint: #e8f0fe; }
+.slot-e-learning { --c: #ea580c; --tint: #fff3e8; }
+.slot-overdue { --c: #dc2626; --tint: #fef0f0; }
+.overdue h3 { margin: .8rem 0 0; color: #b91c1c; font-size: .95rem; }
+.budget { margin-top: .8rem; }
+.section-h { color: white; margin: 1.4rem 0 .2rem; font-size: 1.1rem; }
+.energy-form p { margin: .3rem 0; }
+/* Ask AI + fab */
+.ask-btn { display: inline-flex; align-items: center; gap: .4rem; background: var(--sunset); color: white; border: none; border-radius: 999px; padding: .6rem 1.1rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+#chat-fab { display: inline-flex; align-items: center; justify-content: center; }

@@ -8,23 +8,23 @@ from django.utils import timezone
 class UserProfile(models.Model):
     """Onboarding quiz answers: who you are + how much 5-9 time you'll commit."""
     PERSON_TYPES = [
-        ('planner', '📋 Planner — I love a routine'),
-        ('spontaneous', '🎲 Go-with-the-flow'),
-        ('balancer', '⚖️ A bit of both'),
+        ('planner', 'Planner — I love a routine'),
+        ('spontaneous', 'Go-with-the-flow'),
+        ('balancer', 'A bit of both'),
     ]
     CHRONOTYPES = [
-        ('early', '🌅 Early bird — best right after work'),
-        ('night', '🦉 Night owl — best later in the evening'),
-        ('either', '🤷 Either — energy decides'),
+        ('early', 'Early bird — best right after work'),
+        ('night', 'Night owl — best later in the evening'),
+        ('either', 'Either — energy decides'),
     ]
     SOCIAL_BALANCE = [
-        ('self', '🔋 Mostly me-time (recharge solo)'),
-        ('balanced', '⚖️ Balanced social + self'),
-        ('social', '🎉 Mostly social (recharge with people)'),
+        ('self', 'Mostly me-time (recharge solo)'),
+        ('balanced', 'Balanced social + self'),
+        ('social', 'Mostly social (recharge with people)'),
     ]
     TASK_STYLES = [
-        ('few_big', '🧱 Few bigger tasks per evening'),
-        ('many_small', '🧩 Many small tasks per evening'),
+        ('few_big', 'Few bigger tasks per evening'),
+        ('many_small', 'Many small tasks per evening'),
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     person_type = models.CharField(max_length=20, choices=PERSON_TYPES, default='balancer')

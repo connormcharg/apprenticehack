@@ -1,6 +1,6 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
-<h1 class="page-title">Welcome back 🌙</h1>
+<h1 class="page-title">Welcome back</h1>
 <div class="card"><form method="post">{% csrf_token %}{{ form.as_p }}<input type="submit" value="Log in"></form></div>
 <p class="page-sub">New here? <a href="{% url 'signup' %}">Create an account</a></p>
 {% endblock %}

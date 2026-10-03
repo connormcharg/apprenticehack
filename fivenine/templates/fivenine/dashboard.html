@@ -1,25 +1,75 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
-<section class="hero">
-  <h1>Your 5-9, sorted 🌙</h1>
-  <p>Goals, chores, study — without burnout. <a href="{% url 'evening_plan' %}">Plan tonight →</a></p>
-  <div class="cta-row">
-    <a class="cta" href="{% url 'evening_plan' %}">Plan tonight</a>
-    <a class="cta ghost" href="{% url 'energy_log' %}">Log energy</a>
+<p class="date-eyebrow">{{ date_label }}</p>
+<div class="greet-row">
+  <div>
+    <h1 class="greet">{{ greeting }}, {{ name }}</h1>
+    <p class="greet-sub">Here's what your day looks like.</p>
+  </div>
+  <a class="cta" href="{% url 'evening_plan' %}?day={{ selected|date:'Y-m-d' }}">Plan tonight</a>
+</div>
+{% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
+
+<section class="card day-card">
+  <div class="week-head">
+    <h2>{% if selected == today %}This week{% else %}{{ selected|date:'j M' }}{% endif %}</h2>
+    <div class="week-nav">
+      <a href="?day={{ prev_week }}" aria-label="Previous week">‹</a>
+      <a href="?day={{ next_week }}" aria-label="Next week">›</a>
+    </div>
+  </div>
+  <div class="week-strip">
+    {% for d in week_days %}
+    <a class="week-day {% if d == selected %}selected{% endif %} {% if d == today %}is-today{% endif %}" href="?day={{ d|date:'Y-m-d' }}">
+      <span>{{ d|date:'D' }}</span><strong>{{ d.day }}</strong>
+    </a>
+    {% endfor %}
+  </div>
+  <div class="day-nav">
+    <a href="?day={{ prev_day }}">‹ Prev day</a>
+    <a href="?day={{ today|date:'Y-m-d' }}">Today</a>
+    <a href="?day={{ next_day }}">Next day ›</a>
+  </div>
+  {% if overdue %}
+  <div class="overdue">
+    <h3>Overdue</h3>
+    {% for t in overdue %}
+    <div class="slot slot-overdue">
+      <div class="slot-main"><strong>{{ t.title }}</strong><small>Due {{ t.due_date }} · {{ t.minutes }} min</small></div>
+      <a class="slot-done" href="{% url 'task_toggle' t.pk %}?next=/?day={{ selected|date:'Y-m-d' }}">Done</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="slots">
+    {% for s in slots %}
+    <div class="slot {{ s.css }}">
+      <div class="slot-main"><strong>{{ s.title }}</strong><small>{{ s.meta }}</small></div>
+      {% if s.toggle %}<a class="slot-done" href="{% url 'task_toggle' s.toggle %}?next=/?day={{ selected|date:'Y-m-d' }}">Done</a>{% endif %}
+    </div>
+    {% empty %}
+    <p class="muted">Nothing scheduled — enjoy the open evening, or <a href="{% url 'goal_list' %}">add something</a>.</p>
+    {% endfor %}
+  </div>
+  {% if profile %}
+  <p class="muted budget">{{ planned }} min planned of ~{{ profile.minutes_per_evening }} min evening budget · <a href="{% url 'evening_plan' %}">Generate tonight's plan</a></p>
+  {% endif %}
+</section>
+
+<section class="grid">
+  <div class="card">
+    <h3>Energy check-in</h3>
+    <form method="post" class="energy-form">{% csrf_token %}{{ eform.as_p }}<input type="submit" value="Log"></form>
+    {% if recent_energy %}<p class="muted">Recent: {% for e in recent_energy %}{{ e.level }}/5 ({{ e.date|date:'D' }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+  </div>
+  <div class="card">
+    <h3>Evening budget</h3>
+    {% if profile %}
+    <p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} eve/wk × {{ profile.minutes_per_evening }}m</span></p>
+    <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'quiz' %}">retake quiz</a></p>
+    {% else %}
+    <p><a href="{% url 'quiz' %}">Take the quiz</a> to personalise your plan.</p>
+    {% endif %}
   </div>
 </section>
-{% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
-{% if profile %}
-<div class="card"><p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} eve/wk × {{ profile.minutes_per_evening }}m</span><br>
-<small>{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }}{% if profile.company %} · {{ profile.company }}{% endif %}{% if profile.location %} · {{ profile.location }}{% endif %}{% if profile.skills %} · {{ profile.skills }}{% endif %} — <a href="{% url 'quiz' %}">retake quiz</a></small></p></div>
-{% endif %}
-<div class="grid">
-  <div class="card"><h3>🎯 Goals</h3>{% for g in goals %}<p><span class="badge">{{ g.get_category_display }}</span><br><strong>{{ g.title }}</strong></p>{% empty %}<p class="muted">No goals yet. <a href="{% url 'goal_list' %}">Add one</a></p>{% endfor %}</div>
-  <div class="card"><h3>☑️ Up next</h3>{% for t in tasks %}<p>☐ <strong>{{ t.title }}</strong><br><small>{{ t.minutes }}m · {{ t.get_kind_display }} · energy {{ t.energy_cost }}</small></p>{% empty %}<p class="muted">Nothing due. Enjoy it. 🛋️</p>{% endfor %}</div>
-  <div class="card"><h3>⚡ Energy</h3>{% if energy %}<p><strong>{{ energy.level }}/5</strong> <small>on {{ energy.date }}</small><br>{% if energy.note %}{{ energy.note }}{% endif %}</p>{% else %}<p class="muted">No check-in yet.</p>{% endif %}<p><a href="{% url 'energy_log' %}">Log energy →</a></p></div>
-  <div class="card"><h3>🤝 Community</h3>{% for e in events %}<p><span class="badge">{{ e.get_kind_display }}</span><br><strong>{{ e.title }}</strong><br><small>{{ e.date }}</small></p>{% empty %}<p class="muted">No events yet.</p>{% endfor %}<p><a href="{% url 'event_list' %}">See all →</a></p></div>
-</div>
-{% if feed_url %}
-<div class="card"><h3>📲 Phone calendar sync</h3><p class="muted">Subscribe in Google/Apple Calendar — your tasks + community events appear automatically.</p><p><small><code>{{ feed_url }}</code></small></p></div>
-{% endif %}
 {% endblock %}
