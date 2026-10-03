@@ -20,6 +20,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
+from fivenine.models import Goal, UserProfile
+
 from .models import find_account, hours_between
 
 MAX_TECHNOLOGIES = 12
@@ -405,3 +407,84 @@ class WorkingHoursForm(forms.Form):
                     f"{float(available):g} hours are left for everything else.",
                 )
         return cleaned
+
+
+class ChoiceSelect(forms.RadioSelect):
+    """Radio buttons rendered as stacked, tappable choice cards."""
+
+    template_name = "onboarding/_choice_group.html"
+    option_template_name = "onboarding/_choice_option.html"
+
+
+class QuizForm(forms.ModelForm):
+    """Step 3: how the apprentice wants their 5-9 to look.
+
+    The professional details (company, location, skills) are already collected
+    in step 1, so they are deliberately absent here — the view copies them onto
+    the profile so the planner's own copy stays in step.
+    """
+
+    weekly_tasks = forms.CharField(
+        label="Your regular weekly tasks",
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": "field__input",
+                "rows": 3,
+                "placeholder": "e.g. food shop\nlaundry\nclean bathroom",
+            }
+        ),
+        help_text="One per line — each becomes a household task.",
+    )
+
+    first_goal = forms.CharField(
+        label="One headline goal",
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(
+            attrs={"class": "field__input", "placeholder": "e.g. Run a 5k"}
+        ),
+        help_text="Your headline goal for the next few weeks.",
+    )
+
+    first_goal_category = forms.ChoiceField(
+        label="Goal area",
+        choices=Goal.CATEGORIES,
+        initial="career",
+        required=False,
+        widget=forms.Select(attrs={"class": "field__input"}),
+    )
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "person_type",
+            "chronotype",
+            "evenings_per_week",
+            "minutes_per_evening",
+            "social_balance",
+            "task_style",
+        ]
+        widgets = {
+            "person_type": ChoiceSelect,
+            "chronotype": ChoiceSelect,
+            "social_balance": ChoiceSelect,
+            "task_style": ChoiceSelect,
+            "evenings_per_week": forms.NumberInput(
+                attrs={
+                    "class": "field__input",
+                    "min": "1",
+                    "max": "7",
+                    "inputmode": "numeric",
+                }
+            ),
+            "minutes_per_evening": forms.NumberInput(
+                attrs={
+                    "class": "field__input",
+                    "min": "15",
+                    "max": "600",
+                    "step": "15",
+                    "inputmode": "numeric",
+                }
+            ),
+        }

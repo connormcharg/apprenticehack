@@ -24,7 +24,7 @@ def service_worker(request):
     return FileResponse(open(path, 'rb'), content_type='application/javascript')
 
 
-# ---------- auth + quiz ----------
+# ---------- auth ----------
 
 def signup(request):
     if request.user.is_authenticated:

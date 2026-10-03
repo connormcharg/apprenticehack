@@ -56,6 +56,18 @@
         {% endif %}
       </dd>
     </div>
+    <div class="summary__row">
+      <dt>Your 5-9</dt>
+      <dd>
+        {% if profile and profile.quiz_done %}
+          {{ profile.get_person_type_display }} &middot;
+          {{ profile.evenings_per_week }} evenings a week &middot;
+          {{ profile.minutes_per_evening }} minutes each
+        {% else %}
+          <span class="muted">Not set yet</span>
+        {% endif %}
+      </dd>
+    </div>
   </dl>
 
   <div class="actions">
@@ -63,6 +75,9 @@
     <a class="button button--ghost" href="{% url 'onboarding:about_you' %}">Edit my details</a>
     <a class="button button--ghost" href="{% url 'onboarding:hours' %}">
       {% if apprentice.has_working_hours %}Edit my hours{% else %}Add my hours{% endif %}
+    </a>
+    <a class="button button--ghost" href="{% url 'onboarding:quiz' %}">
+      {% if profile and profile.quiz_done %}Edit my 5-9{% else %}Set up my 5-9{% endif %}
     </a>
     <span class="actions__note">Saved {{ apprentice.updated_at|date:"j M Y, H:i" }}</span>
   </div>
