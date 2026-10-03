@@ -12,4 +12,5 @@ urlpatterns = [
     path('', onboarding_views.home, name='home'),
     path('onboarding/', include('onboarding.urls')),
     path('admin/', admin.site.urls),
+    path('', include('fivenine.urls')),
 ]

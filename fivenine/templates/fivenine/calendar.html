@@ -1,0 +1,24 @@
+{% extends 'fivenine/base.html' %}
+{% block content %}
+<h1 class="page-title">{{ month_name }} {{ year }} 📅</h1>
+<p class="page-sub"><a href="?year={{ prev_year }}&month={{ prev_month }}">← Prev</a> · <a href="{% url 'calendar' %}">This month</a> · <a href="?year={{ next_year }}&month={{ next_month }}">Next →</a></p>
+<div class="card cal">
+  <div class="cal-head"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+  {% for week in weeks %}
+  <div class="cal-week">
+    {% for d in week %}
+    <div class="cal-day {% if not d.day %}empty{% endif %} {% if d.is_today %}today{% endif %}">
+      {% if d.day %}<strong>{{ d.day }}</strong>
+      {% for t in d.tasks %}<div class="cal-task">☑ {{ t.title }}</div>{% endfor %}
+      {% for e in d.events %}<div class="cal-event">📅 {{ e.title }}</div>{% endfor %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+<p class="page-sub">Tasks appear on their due date · events on their date. Add tasks <a href="{% url 'task_list' %}">here</a>, events <a href="{% url 'event_list' %}">here</a>.</p>
+{% if feed_url %}
+<div class="card"><h3>📲 Add to Google / Apple Calendar</h3><p class="muted">Subscribe with this secret link (works in Google Calendar → Add → From URL, or Apple Calendar → Add Calendar → Add Subscription):</p><p><small><code>{{ feed_url }}</code></small></p></div>
+{% endif %}
+{% endblock %}

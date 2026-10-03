@@ -1,0 +1,7 @@
+{% extends 'fivenine/base.html' %}
+{% block content %}
+<h1 class="page-title">Goals 🎯</h1>
+<p class="page-sub">1–3 goals max. Tiny steps you can do after work.</p>
+<div class="card"><form method="post">{% csrf_token %}{{ form.as_p }}<input type="submit" value="Add goal"></form></div>
+{% for g in goals %}<div class="card"><p><span class="badge">{{ g.get_category_display }}</span><br><strong>{% if g.done %}✅{% else %}🎯{% endif %} {{ g.title }}</strong>{% if g.target_date %} <small>· by {{ g.target_date }}</small>{% endif %}<br>{{ g.description }}<br><a href="{% url 'goal_toggle' g.pk %}">{% if g.done %}Reopen{% else %}Mark done{% endif %}</a></p></div>{% endfor %}
+{% endblock %}

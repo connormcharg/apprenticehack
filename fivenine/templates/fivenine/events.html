@@ -1,0 +1,15 @@
+{% extends 'fivenine/base.html' %}
+{% block content %}
+<h1 class="page-title">Communities 🤝</h1>
+<p class="page-sub">Hackathons, socials, multi-company events — find your people after hours.</p>
+<p>
+  <a class="badge" href="{% url 'event_list' %}">All</a>
+  {% for value, label in kinds %}
+  <a class="badge" href="?kind={{ value }}" {% if active_kind == value %}style="background:#4f46e5;color:white"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</p>
+<div class="card"><h3>📌 Upcoming</h3>{% for e in upcoming %}<p><span class="badge">{{ e.get_kind_display }} · {{ e.date }}</span><br><strong>{{ e.title }}</strong>{% if e.location %} <small>· {{ e.location }}</small>{% endif %}<br>{{ e.description }}</p>{% empty %}<p class="muted">Nothing upcoming{% if active_kind %} in this category{% endif %}. Add one below 👇</p>{% endfor %}</div>
+<div class="card"><h3>➕ Add an event</h3><form method="post">{% csrf_token %}{{ form.as_p }}<input type="submit" value="Add event"></form></div>
+<h2 style="color:white">All events</h2>
+{% for e in events %}<div class="card"><p><span class="badge">{{ e.get_kind_display }} · {{ e.date }}</span><br><strong>{{ e.title }}</strong>{% if e.location %} <small>· {{ e.location }}</small>{% endif %}<br>{{ e.description }}</p></div>{% endfor %}
+{% endblock %}

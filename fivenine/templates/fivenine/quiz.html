@@ -1,0 +1,20 @@
+{% extends 'fivenine/base.html' %}
+{% block content %}
+<h1 class="page-title">What kind of 5-9 person are you? 🧭</h1>
+<p class="page-sub">60 seconds — this tunes your evening plans, energy caps and assistant.</p>
+<div class="card">
+<form method="post">{% csrf_token %}
+  <h3>1. Which sounds most like you?</h3>{{ form.person_type }}
+  <h3>2. When is your evening energy best?</h3>{{ form.chronotype }}
+  <h3>3. How many evenings per week should we plan?</h3>{{ form.evenings_per_week }}
+  <h3>4. Free minutes on a typical evening?</h3>{{ form.minutes_per_evening }}
+  <h3>5. Evenings are mostly for…?</h3>{{ form.social_balance }}
+  <h3>6. Per evening, you prefer…?</h3>{{ form.task_style }}
+  <h3>7. Professional bits (optional)</h3>
+  <p><label>Company</label>{{ form.company }}</p>
+  <p><label>Location</label>{{ form.location }}</p>
+  <p><label>Skills (comma-separated)</label>{{ form.skills }}</p>
+  <input type="submit" value="Start my 5-9 →">
+</form>
+</div>
+{% endblock %}

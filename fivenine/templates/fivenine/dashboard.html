@@ -1,0 +1,25 @@
+{% extends 'fivenine/base.html' %}
+{% block content %}
+<section class="hero">
+  <h1>Your 5-9, sorted 🌙</h1>
+  <p>Goals, chores, study — without burnout. <a href="{% url 'evening_plan' %}">Plan tonight →</a></p>
+  <div class="cta-row">
+    <a class="cta" href="{% url 'evening_plan' %}">Plan tonight</a>
+    <a class="cta ghost" href="{% url 'energy_log' %}">Log energy</a>
+  </div>
+</section>
+{% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
+{% if profile %}
+<div class="card"><p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} eve/wk × {{ profile.minutes_per_evening }}m</span><br>
+<small>{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }}{% if profile.company %} · {{ profile.company }}{% endif %}{% if profile.location %} · {{ profile.location }}{% endif %}{% if profile.skills %} · {{ profile.skills }}{% endif %} — <a href="{% url 'quiz' %}">retake quiz</a></small></p></div>
+{% endif %}
+<div class="grid">
+  <div class="card"><h3>🎯 Goals</h3>{% for g in goals %}<p><span class="badge">{{ g.get_category_display }}</span><br><strong>{{ g.title }}</strong></p>{% empty %}<p class="muted">No goals yet. <a href="{% url 'goal_list' %}">Add one</a></p>{% endfor %}</div>
+  <div class="card"><h3>☑️ Up next</h3>{% for t in tasks %}<p>☐ <strong>{{ t.title }}</strong><br><small>{{ t.minutes }}m · {{ t.get_kind_display }} · energy {{ t.energy_cost }}</small></p>{% empty %}<p class="muted">Nothing due. Enjoy it. 🛋️</p>{% endfor %}</div>
+  <div class="card"><h3>⚡ Energy</h3>{% if energy %}<p><strong>{{ energy.level }}/5</strong> <small>on {{ energy.date }}</small><br>{% if energy.note %}{{ energy.note }}{% endif %}</p>{% else %}<p class="muted">No check-in yet.</p>{% endif %}<p><a href="{% url 'energy_log' %}">Log energy →</a></p></div>
+  <div class="card"><h3>🤝 Community</h3>{% for e in events %}<p><span class="badge">{{ e.get_kind_display }}</span><br><strong>{{ e.title }}</strong><br><small>{{ e.date }}</small></p>{% empty %}<p class="muted">No events yet.</p>{% endfor %}<p><a href="{% url 'event_list' %}">See all →</a></p></div>
+</div>
+{% if feed_url %}
+<div class="card"><h3>📲 Phone calendar sync</h3><p class="muted">Subscribe in Google/Apple Calendar — your tasks + community events appear automatically.</p><p><small><code>{{ feed_url }}</code></small></p></div>
+{% endif %}
+{% endblock %}
