@@ -19,6 +19,6 @@
 </div>
 <p class="page-sub">Tap an item to open it. Add tasks <a href="{% url 'goal_list' %}">here</a>, events <a href="{% url 'event_list' %}">here</a>.</p>
 {% if feed_url %}
-<div class="card"><h3>Add to Google / Apple Calendar</h3><p class="muted">Subscribe with this secret link (works in Google Calendar → Add → From URL, or Apple Calendar → Add Subscription):</p><p><small><code>{{ feed_url }}</code></small></p></div>
+<div class="card"><h3>Add to Google / Apple Calendar</h3><p class="muted">Use this private link to subscribe.</p><p class="muted">In Google Calendar, choose Add then From URL. In Apple Calendar, choose Add Calendar then Add Subscription.</p><p><small><code>{{ feed_url }}</code></small></p></div>
 {% endif %}
 {% endblock %}

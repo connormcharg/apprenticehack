@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .forms import EnergyForm, EventForm, GoalForm, PlanForm, SignupForm, TaskForm
+from .forms import EnergyForm, EventForm, GoalForm, SignupForm, TaskForm
 from .models import CommunityEvent, EnergyLog, EventAttendee, Goal, Task, UserProfile, display_name_for
 
 
@@ -54,7 +54,7 @@ def burnout_warning(user):
         return None
     avg = sum(e.level for e in recent) / len(recent)
     if avg <= 2.2:
-        return 'Your energy has been low lately — tonight is capped at something light + rest.'
+        return 'Your energy has been low lately — keep tonight light, then rest.'
     return None
 
 
@@ -244,48 +244,6 @@ def event_detail(request, pk):
     })
 
 
-def build_plan(user, minutes_available, energy_level):
-    """Energy-aware planner, personalised: task_style caps item count."""
-    profile = get_profile(user)
-    max_items = 2 if profile and profile.task_style == 'few_big' else 4
-    qs = Task.objects.filter(user=user, done=False)
-    if energy_level <= 2:
-        qs = qs.filter(energy_cost=1)
-        cap = min(minutes_available, 60)
-    elif energy_level == 3:
-        qs = qs.filter(energy_cost__lte=2)
-        cap = min(minutes_available, 120)
-    else:
-        cap = minutes_available
-    qs = qs.order_by('due_date', 'energy_cost')
-    picked, total = [], 0
-    for task in qs:
-        if total + task.minutes <= cap:
-            picked.append(task)
-            total += task.minutes
-        if len(picked) >= max_items or total >= cap:
-            break
-    return picked, total, cap
-
-
-@login_required
-def evening_plan(request):
-    profile = get_profile(request.user)
-    default_minutes = profile.minutes_per_evening if profile else 120
-    form = PlanForm(request.GET or None, initial={'minutes_available': default_minutes, 'energy': '3'})
-    picked, total, cap, warning = [], 0, 0, burnout_warning(request.user)
-    if form.is_valid():
-        minutes_available = form.cleaned_data['minutes_available']
-        energy_level = int(form.cleaned_data['energy'])
-        picked, total, cap = build_plan(request.user, minutes_available, energy_level)
-        if energy_level <= 2 and not any(t.kind == 'rest' for t in picked):
-            warning = (warning or '') + ' Add a rest block — wind down, no screens for 30m.'
-    return render(request, 'fivenine/plan.html', {
-        'form': form, 'picked': picked, 'total': total, 'cap': cap, 'warning': warning,
-        'profile': profile,
-    })
-
-
 @login_required
 def event_list(request):
     kind = request.GET.get('kind', '')
@@ -369,7 +327,8 @@ def household(request):
         if Task.objects.filter(user=user, title__iexact=title).exists():
             continue
         suggestions.append({'key': key, 'title': title, 'minutes': minutes,
-                            'energy': energy, 'reason': reason})
+                            'energy': {1: 'Low', 2: 'Medium', 3: 'High'}[energy],
+                            'reason': reason})
     undated_count = open_chores.filter(due_date__isnull=True).count()
     return render(request, 'fivenine/household.html', {
         'chores': chores, 'suggestions': suggestions, 'undated_count': undated_count,

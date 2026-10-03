@@ -4,10 +4,10 @@
   <div>
     <p class="eyebrow-lite">{{ date_label }}</p>
     <h1>{{ greeting }}, {{ name }} — your week, without the overwhelm.</h1>
-    <p>Work, uni, washing, cooking, cleaning and career growth — planned around your actual capacity, not just empty calendar slots.</p>
+    <p>Work, washing, cooking, cleaning and rest. Planned around the energy you really have.</p>
     <div class="cta-row">
-      <a class="btn-light" href="{% url 'calendar' %}">View my week</a>
-      <a class="btn-light" href="{% url 'event_list' %}">Find networking</a>
+      <a class="btn-light" href="{% url 'calendar' %}">See my week</a>
+      <a class="btn-light" href="{% url 'event_list' %}">Meet people</a>
     </div>
   </div>
   <div class="capacity">
@@ -58,7 +58,7 @@
     {% endfor %}
   </div>
   {% if profile %}
-  <p class="muted budget">{{ planned }} min planned of ~{{ profile.minutes_per_evening }} min evening budget · <a href="{% url 'evening_plan' %}">Generate tonight's plan</a></p>
+  <p class="muted budget">{{ planned }} min planned of ~{{ profile.minutes_per_evening }} min evening budget · <a href="{% url 'onboarding:evenings' %}">Edit evening budget</a></p>
   {% endif %}
 </section>
 
@@ -68,7 +68,7 @@
   <div class="card ai-rec">
     <p><strong>You have a networking opportunity {{ recommendation.event.date|date:'l' }}.</strong><br>
     <span class="muted">{{ recommendation.reason }}: {{ recommendation.event.title }}, {{ recommendation.event.date|date:'j M' }}{% if recommendation.event.location %} · {{ recommendation.event.location }}{% endif %}.</span></p>
-    <p><a class="cta" href="{% url 'event_list' %}">See the match</a></p>
+    <p><a class="cta" href="{% url 'event_list' %}">See the event</a></p>
   </div>
 </section>
 {% endif %}
@@ -82,7 +82,7 @@
   <div class="card">
     <h3>Evening budget</h3>
     {% if profile %}
-    <p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} eve/wk × {{ profile.minutes_per_evening }}m</span></p>
+    <p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} evenings a week × {{ profile.minutes_per_evening }} min</span></p>
     <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'onboarding:evenings' %}">edit evenings</a></p>
     {% else %}
     <p><a href="{% url 'onboarding:evenings' %}">Shape your evenings</a> to personalise your plan.</p>

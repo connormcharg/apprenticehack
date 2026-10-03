@@ -2,11 +2,11 @@
 {% block content %}
 <div class="page-head">
   <h1 class="page-title">Goals &amp; growth</h1>
-  <a class="cta" href="{% url 'evening_plan' %}">+ Add plan</a>
+  <a class="cta" href="#add">+ Add plan</a>
 </div>
 <p class="eyebrow-lite">Career + life</p>
 <h2 class="goals-title">Goals</h2>
-<p class="page-sub">Your AI turns bigger ambitions into small actions that actually fit your week.</p>
+<p class="page-sub">Your AI turns big goals into small steps that fit your week.</p>
 
 <div class="grid goal-grid">
   {% for c in cards %}
@@ -20,7 +20,7 @@
     <p><a href="{% url 'goal_toggle' c.goal.pk %}">{% if c.goal.done %}Reopen{% else %}Mark done{% endif %}</a></p>
   </div>
   {% empty %}
-  <div class="card"><p class="muted">No goals yet — add one below, or tell the + button your ambition.</p></div>
+  <div class="card"><p class="muted">No goals yet — add one below, or tell the + button your goal.</p></div>
   {% endfor %}
 </div>
 
@@ -37,11 +37,11 @@
     <span class="muted">{{ t.due_date|date:'D' }}</span>
   </div>
   {% empty %}
-  <p class="muted">Nothing due this week. Enjoy it — or plan ahead below.</p>
+    <p class="muted">Nothing due this week. Enjoy it — or add a task below.</p>
   {% endfor %}
 </div>
 
-<div class="grid">
+<div class="grid" id="add">
 <div class="card"><h3>Add a goal</h3><form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="goal">{{ goal_form.as_p }}<input type="submit" value="Add goal"></form></div>
 <div class="card"><h3>Add a task</h3><form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="task">{{ task_form.as_p }}<input type="submit" value="Add task"></form></div>
 </div>
@@ -49,9 +49,9 @@
 <h2 class="section-h">All tasks</h2>
 {% for t in top_tasks %}
 <div class="card task-row">
-  <p><span class="badge">{{ t.get_kind_display }} · {{ t.minutes }}m · energy {{ t.energy_cost }}</span><br>
+  <p><span class="badge">{{ t.get_kind_display }} · {{ t.minutes }}m · {{ t.energy_label }} energy</span><br>
   <strong>{% if t.done %}Done — {% endif %}{{ t.title }}</strong>{% if t.goal %} <small>· {{ t.goal.title }}</small>{% endif %}{% if t.due_date %} <small>· due {{ t.due_date }}</small>{% endif %}{% if t.start_time %} <small>· {{ t.start_time|time:'H:i' }}</small>{% endif %}<br>
-  <a href="{% url 'task_detail' t.pk %}">Open</a> · <a href="{% url 'task_toggle' t.pk %}?next=/goals/">{% if t.done %}Reopen{% else %}Done{% endif %}</a></p>
+  <a href="{% url 'task_detail' t.pk %}">Details</a> · <a href="{% url 'task_toggle' t.pk %}?next=/goals/">{% if t.done %}Reopen{% else %}Done{% endif %}</a></p>
   {% for s in t.subtasks.all %}
   <p class="subtask"><strong>{% if s.done %}Done — {% endif %}{{ s.title }}</strong> <small>{{ s.minutes }}m</small> · <a href="{% url 'task_toggle' s.pk %}?next=/goals/">{% if s.done %}Reopen{% else %}Done{% endif %}</a></p>
   {% endfor %}

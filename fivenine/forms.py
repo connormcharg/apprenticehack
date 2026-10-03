@@ -60,11 +60,3 @@ class EventForm(forms.ModelForm):
         model = CommunityEvent
         fields = ['title', 'kind', 'topic', 'date', 'location', 'description']
         widgets = {'date': forms.DateInput(attrs={'type': 'date'})}
-
-
-class PlanForm(forms.Form):
-    minutes_available = forms.IntegerField(min_value=15, max_value=300, initial=120, label='Minutes tonight')
-    energy = forms.ChoiceField(
-        choices=[('1', 'Drained'), ('2', 'Low'), ('3', 'OK'), ('4', 'Good'), ('5', 'Great')],
-        initial='3',
-    )

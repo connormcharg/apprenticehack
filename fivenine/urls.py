@@ -14,7 +14,6 @@ urlpatterns = [
     path('goals/<int:pk>/toggle/', views.goal_toggle, name='goal_toggle'),
     path('tasks/<int:pk>/toggle/', views.task_toggle, name='task_toggle'),
     path('tasks/<int:pk>/', views.task_detail, name='task_detail'),
-    path('plan/', views.evening_plan, name='evening_plan'),
     path('events/', views.event_list, name='event_list'),
     path('events/<int:pk>/join/', views.event_join, name='event_join'),
     path('events/<int:pk>/leave/', views.event_leave, name='event_leave'),

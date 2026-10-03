@@ -104,6 +104,10 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
+    @property
+    def energy_label(self):
+        return {1: 'Low', 2: 'Medium', 3: 'High'}.get(self.energy_cost, 'Medium')
+
     def progress(self):
         """(done_count, total_count) including sub-tasks."""
         kids = list(self.subtasks.all())
@@ -132,7 +136,7 @@ class CommunityEvent(models.Model):
         ('hackathon', 'Hackathon'),
         ('social', 'Social'),
         ('multi-company', 'Multi-company'),
-        ('learning', 'Learning / CPD'),
+        ('learning', 'Learning'),
     ]
     title = models.CharField(max_length=200)
     kind = models.CharField(max_length=20, choices=KINDS, default='social')
