@@ -1,0 +1,965 @@
+/* ==========================================================================
+   ApprenticeHack — onboarding
+   Mobile-first, no build step, no external assets.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Design tokens ---------------------------------------------------------- */
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --bg-a: #eef2ff;
+  --bg-b: #fdf2f8;
+  --bg-c: #ecfeff;
+
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-border: rgba(15, 23, 42, 0.09);
+  --surface-raised: #ffffff;
+
+  --text: #0f172a;
+  --text-muted: #5b6b83;
+  --on-accent: #ffffff;
+
+  --accent: #4f46e5;
+  --accent-strong: #4338ca;
+  --accent-soft: rgba(79, 70, 229, 0.09);
+
+  --line: #c3cddf;
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.08);
+
+  --chip-bg: rgba(79, 70, 229, 0.1);
+  --chip-text: #3730a3;
+  --chip-border: rgba(79, 70, 229, 0.24);
+
+  --shadow-card: 0 30px 60px -30px rgba(15, 23, 42, 0.45),
+    0 2px 8px -2px rgba(15, 23, 42, 0.08);
+
+  --radius-lg: 1.5rem;
+  --radius-md: 0.75rem;
+  --radius-pill: 999px;
+
+  --space-page: clamp(1rem, 4vw, 2.5rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-a: #0b1020;
+    --bg-b: #1b1030;
+    --bg-c: #06202a;
+
+    --surface: rgba(19, 24, 42, 0.82);
+    --surface-border: rgba(148, 163, 184, 0.18);
+    --surface-raised: #1b2340;
+
+    --text: #e6ebf5;
+    --text-muted: #9aa8c0;
+    --on-accent: #10142a;
+
+    --accent: #a5b4fc;
+    --accent-strong: #c7d2fe;
+    --accent-soft: rgba(165, 180, 252, 0.14);
+
+    --line: #46536f;
+    --danger: #fca5a5;
+    --danger-soft: rgba(252, 165, 165, 0.13);
+
+    --chip-bg: rgba(165, 180, 252, 0.16);
+    --chip-text: #dbe2ff;
+    --chip-border: rgba(165, 180, 252, 0.32);
+
+    --shadow-card: 0 30px 60px -30px rgba(0, 0, 0, 0.85),
+      0 2px 8px -2px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Page shell ------------------------------------------------------------- */
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text);
+  background-color: var(--bg-a);
+  background-image: radial-gradient(
+      55rem 40rem at 110% -10%,
+      var(--bg-c),
+      transparent 60%
+    ),
+    radial-gradient(50rem 40rem at -10% 110%, var(--bg-b), transparent 60%);
+  background-attachment: fixed;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.page__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: var(--space-page) var(--space-page) 0;
+}
+
+.page__main {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-page);
+}
+
+.page__footer {
+  flex: 0 0 auto;
+  padding: 0 var(--space-page) var(--space-page);
+  padding-bottom: max(var(--space-page), env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.page__footer p {
+  margin: 0;
+}
+
+/* Brand ------------------------------------------------------------------ */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: -0.4rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.35rem;
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: background-color 0.18s ease;
+}
+
+.brand:hover {
+  background: var(--accent-soft);
+}
+
+.brand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: #fff;
+}
+
+.brand__mark svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Sign out --------------------------------------------------------------- */
+
+.signout {
+  margin: 0;
+}
+
+.signout__button {
+  min-height: 2.75rem;
+  padding: 0.4rem 1rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.signout__button:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.signout__button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Card ------------------------------------------------------------------- */
+
+.card {
+  width: 100%;
+  max-width: 44rem;
+  padding: clamp(1.25rem, 5vw, 2.75rem);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.card__title {
+  margin: 0 0 clamp(1.25rem, 4vw, 2rem);
+  font-size: clamp(1.5rem, 1.15rem + 1.8vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+
+/* Step progress ---------------------------------------------------------- */
+
+.progress {
+  height: 4px;
+  margin: 0 0 clamp(1.25rem, 4vw, 2rem);
+  background: var(--accent-soft);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.progress__bar {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+
+.progress__bar--half {
+  width: 50%;
+}
+
+.progress__bar--full {
+  width: 100%;
+}
+
+.lede {
+  margin: -0.75rem 0 clamp(1.25rem, 4vw, 2rem);
+  color: var(--text-muted);
+  font-size: clamp(0.9375rem, 0.9rem + 0.3vw, 1.0625rem);
+}
+
+.card__foot {
+  margin: clamp(1.5rem, 4vw, 2rem) 0 0;
+  padding-top: clamp(1rem, 3vw, 1.5rem);
+  border-top: 1px solid var(--surface-border);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Stacked form fields (account creation and sign-in) --------------------- */
+
+.card--narrow {
+  max-width: 30rem;
+}
+
+.field {
+  margin-bottom: clamp(1rem, 3vw, 1.25rem);
+}
+
+.field__label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.field__control {
+  position: relative;
+}
+
+.field__input {
+  display: block;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  font: inherit;
+  /* 16px minimum, or iOS zooms the page when the field is focused. */
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.field__input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.field__input:hover {
+  border-color: var(--accent);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.field__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.field__input[aria-invalid="true"] {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+/* Room for the reveal button so long values don't slide underneath it. */
+.field--password .field__input {
+  padding-right: 3.25rem;
+}
+
+.field--password .reveal {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+}
+
+.field__error {
+  margin: 0.4rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--danger);
+}
+
+/* The fill-in-the-blank sentence ----------------------------------------- */
+
+.sentence {
+  margin: 0;
+  font-size: clamp(1.125rem, 0.98rem + 0.9vw, 1.625rem);
+  line-height: 2.75;
+  letter-spacing: -0.011em;
+}
+
+.blank {
+  position: relative;
+}
+
+.blank:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
+}
+
+.blank__input {
+  display: inline-block;
+  vertical-align: middle;
+  width: 14ch;
+  min-width: 7ch;
+  max-width: 100%;
+  padding: 0.15em 0.45em 0.22em;
+  font: inherit;
+  /* `font: inherit` also pulls in the sentence's airy 2.75 line-height, which
+     would stretch the blank to roughly triple its text height. */
+  line-height: 1.25;
+  color: var(--text);
+  text-overflow: ellipsis;
+  background: var(--accent-soft);
+  border: 1px solid transparent;
+  border-bottom: 2px solid var(--line);
+  border-radius: var(--radius-md) var(--radius-md) 0.3rem 0.3rem;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.blank__input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.blank__input:hover {
+  border-bottom-color: var(--accent);
+}
+
+.blank__input:focus {
+  outline: none;
+  background: var(--accent-soft);
+  border-bottom-color: var(--accent);
+  box-shadow: 0 3px 0 -1px var(--accent);
+}
+
+.blank__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.blank__input[aria-invalid="true"] {
+  background: var(--danger-soft);
+  border-bottom-color: var(--danger);
+}
+
+/* Blank variants --------------------------------------------------------- */
+
+/* Password: fixed width, because a blank that grows with the value would
+   advertise how long the password is. */
+.blank--password {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.blank__input--password {
+  width: 16ch;
+  min-width: 10ch;
+}
+
+/* Native time pickers size themselves; a ch-based width would clip the clock
+   icon, so let the browser decide and just floor it. */
+.blank__input--time {
+  width: auto;
+  min-width: 9ch;
+  text-align: center;
+}
+
+.blank__input--number {
+  width: 6ch;
+  min-width: 5ch;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Spinners crowd the sentence and add nothing on touch devices. */
+.blank__input--number::-webkit-outer-spin-button,
+.blank__input--number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.reveal {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.reveal svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.reveal:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.reveal:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.reveal[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+/* Technology tag editor (progressive enhancement) ------------------------ */
+
+.tokens {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em;
+  max-width: 100%;
+  vertical-align: middle;
+  padding: 0.12em 0.45em;
+  line-height: 1.25;
+  background: var(--accent-soft);
+  border: 1px solid transparent;
+  border-bottom: 2px solid var(--line);
+  border-radius: var(--radius-md) var(--radius-md) 0.3rem 0.3rem;
+  cursor: text;
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.tokens:hover {
+  border-bottom-color: var(--accent);
+}
+
+.tokens:focus-within {
+  border-bottom-color: var(--accent);
+  box-shadow: 0 3px 0 -1px var(--accent);
+}
+
+.tokens:has(.tokens__input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.tokens--invalid {
+  background: var(--danger-soft);
+  border-bottom-color: var(--danger);
+}
+
+.tokens__input {
+  flex: 1 1 9ch;
+  min-width: 9ch;
+  padding: 0.15em 0;
+  font: inherit;
+  line-height: 1.25;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.tokens__input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.tokens__input:focus {
+  outline: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  max-width: 100%;
+  padding: 0.02em 0.3em 0.02em 0.7em;
+  font-size: 0.85em;
+  line-height: 1.75;
+  white-space: nowrap;
+  color: var(--chip-text);
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  border-radius: var(--radius-pill);
+  animation: chip-in 0.16s ease-out;
+}
+
+.chip--static {
+  padding: 0.1em 0.75em;
+  font-size: 0.875rem;
+  animation: none;
+}
+
+.chip__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip__remove {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.5em;
+  height: 1.5em;
+  padding: 0;
+  font: inherit;
+  font-size: 1.05em;
+  line-height: 1;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.chip__remove:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.09);
+}
+
+.chip__remove:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+  opacity: 1;
+}
+
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25em) scale(0.94);
+  }
+}
+
+/* Quick-add suggestions -------------------------------------------------- */
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: clamp(1rem, 3vw, 1.5rem);
+}
+
+.suggestions[hidden] {
+  display: none;
+}
+
+.suggestions__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.suggestions__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.suggestion {
+  min-height: 2.25rem;
+  padding: 0.3rem 0.85rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease,
+    background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.suggestion:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.suggestion:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.suggestion.is-added {
+  opacity: 0.45;
+  cursor: default;
+  text-decoration: line-through;
+}
+
+/* Hint ------------------------------------------------------------------- */
+
+.hint {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+kbd {
+  padding: 0.1em 0.4em;
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-bottom-width: 2px;
+  border-radius: 0.35em;
+}
+
+/* Error summary ---------------------------------------------------------- */
+
+.alert {
+  margin-bottom: clamp(1.25rem, 4vw, 1.75rem);
+  padding: 0.9rem 1.1rem;
+  color: var(--text);
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+}
+
+.alert__title {
+  margin: 0 0 0.4rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.alert__list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.alert__list a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: 2px;
+}
+
+.alert__list a:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
+}
+
+/* Actions ---------------------------------------------------------------- */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: clamp(1.75rem, 5vw, 2.5rem);
+}
+
+.actions__note {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.75rem 1.75rem;
+  font: inherit;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.18s ease,
+    border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button--primary {
+  color: var(--on-accent);
+  background: var(--accent);
+  box-shadow: 0 12px 26px -14px var(--accent);
+}
+
+.button--primary:hover {
+  background: var(--accent-strong);
+}
+
+.button--ghost {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--line);
+}
+
+.button--ghost:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.button__icon {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* Welcome summary -------------------------------------------------------- */
+
+.summary {
+  margin: 0;
+}
+
+.summary__row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 8rem) minmax(0, 1fr);
+  gap: 0.35rem 1rem;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.summary__row:last-child {
+  border-bottom: 0;
+}
+
+.summary dt {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.summary dd {
+  margin: 0;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: 2px;
+}
+
+.link:hover {
+  color: var(--accent-strong);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* Utilities -------------------------------------------------------------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.js-only {
+  display: none;
+}
+
+.js .js-only {
+  display: block;
+}
+
+/* Off-screen ruler used by the JS to size blanks to their content. */
+.measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  visibility: hidden;
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* Small screens ---------------------------------------------------------- */
+
+@media (max-width: 30rem) {
+  .blank__input {
+    padding-top: 0.4em;
+    padding-bottom: 0.45em;
+  }
+
+  .tokens {
+    padding-top: 0.3em;
+    padding-bottom: 0.35em;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions__note {
+    text-align: center;
+  }
+
+  .summary__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

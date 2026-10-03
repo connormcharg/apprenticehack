@@ -1,0 +1,65 @@
+{% extends "onboarding/base.html" %}
+{% load static %}
+
+{% block title %}Sign in · ApprenticeHack{% endblock %}
+
+{% block extra_head %}
+  <script src="{% static 'onboarding/js/onboarding.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<section class="card card--narrow" aria-labelledby="signin-title">
+  <p class="eyebrow">Welcome back</p>
+  <h1 class="card__title" id="signin-title">Sign in to your account.</h1>
+
+  {% if form.errors %}
+    <div class="alert" role="alert">
+      <p class="alert__title">We couldn&rsquo;t sign you in:</p>
+      <ul class="alert__list">
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+        {% for field in form %}
+          {% for error in field.errors %}
+            <li><a href="#{{ field.id_for_label }}" data-focus>{{ error }}</a></li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+    <div class="field">
+      <label class="field__label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+      {{ form.username }}
+      {% include "onboarding/_field_error.html" with field=form.username %}
+    </div>
+
+    <div class="field field--password">
+      <label class="field__label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+      <div class="field__control">
+        {{ form.password }}
+        {% include "onboarding/_reveal.html" with field=form.password %}
+      </div>
+      {% include "onboarding/_field_error.html" with field=form.password %}
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="button button--primary">
+        Sign in
+        <svg class="button__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+          <path d="M3.5 10h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </form>
+
+  <p class="card__foot">
+    New here? <a class="link" href="{% url 'onboarding:sign_up' %}">Create an account</a>
+  </p>
+</section>
+{% endblock %}

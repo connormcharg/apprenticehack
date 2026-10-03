@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'onboarding',
 ]
 
 MIDDLEWARE = [
@@ -115,6 +116,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+# Primary key type for auto-created fields
+# https://docs.djangoproject.com/en/6.1/ref/settings/#std-setting-DEFAULT_AUTO_FIELD
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Authentication
+# https://docs.djangoproject.com/en/6.1/ref/settings/#auth
+
+LOGIN_URL = 'onboarding:sign_in'
+LOGIN_REDIRECT_URL = 'onboarding:welcome'
+LOGOUT_REDIRECT_URL = 'onboarding:sign_in'
 
 
 # Email

@@ -1,0 +1,75 @@
+{% extends "onboarding/base.html" %}
+{% load static %}
+
+{% block title %}Sign up · ApprenticeHack{% endblock %}
+
+{% block extra_head %}
+  <script src="{% static 'onboarding/js/onboarding.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<section class="card card--narrow" aria-labelledby="signup-title">
+  <p class="eyebrow">Get started</p>
+  <h1 class="card__title" id="signup-title">Create your account.</h1>
+  <p class="lede">Two fields now, then a couple of quick questions about your apprenticeship.</p>
+
+  {% if form.errors %}
+    <div class="alert" role="alert">
+      <p class="alert__title">We couldn&rsquo;t create that account:</p>
+      <ul class="alert__list">
+        {% for field in form %}
+          {% for error in field.errors %}
+            <li><a href="#{{ field.id_for_label }}" data-focus>{{ error }}</a></li>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="field">
+      <label class="field__label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+      {{ form.email }}
+      {% include "onboarding/_field_error.html" with field=form.email %}
+    </div>
+
+    <div class="field field--password">
+      <label class="field__label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+      <div class="field__control">
+        {{ form.password }}
+        {% include "onboarding/_reveal.html" with field=form.password %}
+      </div>
+      {% include "onboarding/_field_error.html" with field=form.password %}
+    </div>
+
+    <div class="field field--password">
+      <label class="field__label" for="{{ form.password_confirm.id_for_label }}">{{ form.password_confirm.label }}</label>
+      <div class="field__control">
+        {{ form.password_confirm }}
+        {% include "onboarding/_reveal.html" with field=form.password_confirm %}
+      </div>
+      {% include "onboarding/_field_error.html" with field=form.password_confirm %}
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="button button--primary">
+        Create account
+        <svg class="button__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+          <path d="M3.5 10h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <span class="actions__note">Next: a few questions about you.</span>
+    </div>
+  </form>
+
+  <p class="card__foot">
+    Already have an account? <a class="link" href="{% url 'onboarding:sign_in' %}">Sign in</a>
+  </p>
+</section>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% comment %}
+Show/hide toggle for a password field. The JS wires it up via [data-reveal].
+
+Usage: {% include "onboarding/_reveal.html" with field=form.password %}
+{% endcomment %}
+<button type="button" class="reveal" data-reveal="{{ field.id_for_label }}"
+        aria-label="Show password" aria-pressed="false">
+  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+    <path d="M1.8 10S4.9 4.6 10 4.6 18.2 10 18.2 10 15.1 15.4 10 15.4 1.8 10 1.8 10Z"
+          stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="10" cy="10" r="2.3" stroke="currentColor" stroke-width="1.5"/>
+  </svg>
+</button>
