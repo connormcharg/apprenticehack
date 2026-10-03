@@ -1,0 +1,11 @@
+{% comment %}
+Screen-reader-only error text for a single blank.
+
+Django points each invalid field's `aria-describedby` at `<auto_id>_error`, so
+this element has to exist with exactly that id. It is visually hidden because
+sighted visitors get the error summary at the top of the card plus a red
+underline on the offending blank.
+
+Usage: {% include "onboarding/_blank_errors.html" with field=form.name %}
+{% endcomment %}
+{% if field.errors %}<span class="sr-only" id="{{ field.auto_id }}_error">{% for error in field.errors %}{{ error }} {% endfor %}</span>{% endif %}

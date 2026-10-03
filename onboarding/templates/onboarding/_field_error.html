@@ -1,0 +1,9 @@
+{% comment %}
+Visible error text for a stacked form field.
+
+Django points each invalid field's `aria-describedby` at `<auto_id>_error`, so
+this element has to exist with exactly that id.
+
+Usage: {% include "onboarding/_field_error.html" with field=form.email %}
+{% endcomment %}
+{% if field.errors %}<p class="field__error" id="{{ field.auto_id }}_error">{% for error in field.errors %}{{ error }}{% if not forloop.last %} {% endif %}{% endfor %}</p>{% endif %}
