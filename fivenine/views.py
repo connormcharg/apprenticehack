@@ -107,10 +107,10 @@ def dashboard(request):
     slots.sort(key=lambda s: (s['time'] == '', s['time']))
 
     future_tasks = Task.objects.filter(user=user, done=False, due_date__gt=today).order_by('due_date', 'start_time')
-    future_events = CommunityEvent.objects.filter(date__gt=today).order_by('date')
-    upcoming = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'date': e.date,
-                 'meta': f'{e.get_kind_display()}' + (f' · {e.location}' if e.location else ''),
-                 'right': '', 'toggle': None, 'event_id': e.pk} for e in future_events]
+    future_events = Event.objects.filter(starts_at__date__gt=today).select_related('community').order_by('starts_at')
+    upcoming = [{'css': f'slot-e-{e.kind}', 'title': e.title, 'date': e.starts_at.date(),
+                 'meta': f'{e.get_kind_display()} · {e.community.name}' + (f' · {e.location}' if e.location else ''),
+                 'right': f'{e.starts_at:%H:%M}', 'toggle': None, 'event_id': e.pk} for e in future_events]
     upcoming += [{'css': f'slot-t-{t.kind}', 'title': t.title, 'date': t.due_date,
                   'meta': f'{t.get_kind_display()} · {t.minutes} min' + (f' · {t.goal.title}' if t.goal else ''),
                   'right': f'{t.start_time:%H:%M}' if t.start_time else f'{t.minutes}m',
