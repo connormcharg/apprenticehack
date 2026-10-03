@@ -6,7 +6,7 @@
 <section class="card" aria-labelledby="ev-rec-heading">
   <h3 id="ev-rec-heading">Recommended for you</h3>
   {% for e, reason in recommended %}
-  <p><span class="badge">{{ e.get_kind_display }} · {{ e.date }}</span><br><strong><a href="{% url 'event_detail' e.pk %}">{{ e.title }}</a></strong> <small>— {{ reason }}</small><br>
+  <p><span class="badge">{{ e.get_kind_display }} · {{ e.date|date:'j M Y' }}</span><br><strong><a href="{% url 'event_detail' e.pk %}">{{ e.title }}</a></strong> <small>— {{ reason }}</small><br>
   <small>{{ e.date|date:'l j M' }}{% if e.location %} · {{ e.location }}{% endif %}{% if e.topic %} · {{ e.topic }}{% endif %}</small></p>
   {% endfor %}
 </section>

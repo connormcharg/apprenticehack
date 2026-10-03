@@ -52,7 +52,7 @@
 {% for t in top_tasks %}
 <div class="card task-row-card">
   <p><span class="badge">{{ t.get_kind_display }} · {{ t.minutes }}m · {{ t.energy_label }} energy</span><br>
-  <strong>{% if t.done %}Done — {% endif %}{{ t.title }}</strong>{% if t.goal %} <small>· {{ t.goal.title }}</small>{% endif %}{% if t.due_date %} <small>· due {{ t.due_date }}</small>{% endif %}{% if t.start_time %} <small>· {{ t.start_time|time:'H:i' }}</small>{% endif %}<br>
+  <strong>{% if t.done %}Done — {% endif %}{{ t.title }}</strong>{% if t.goal %} <small>· {{ t.goal.title }}</small>{% endif %}{% if t.due_date %} <small>· due {{ t.due_date|date:'j M Y' }}</small>{% endif %}{% if t.start_time %} <small>· {{ t.start_time|time:'H:i' }}</small>{% endif %}<br>
   <a href="{% url 'task_detail' t.pk %}">Details</a> · <a href="{% url 'task_toggle' t.pk %}?next=/goals/">{% if t.done %}Reopen{% else %}Done{% endif %}</a></p>
   {% for s in t.subtasks.all %}
   <p class="subtask"><strong>{% if s.done %}Done — {% endif %}{{ s.title }}</strong> <small>{{ s.minutes }}m</small> · <a href="{% url 'task_toggle' s.pk %}?next=/goals/">{% if s.done %}Reopen{% else %}Done{% endif %}</a></p>
