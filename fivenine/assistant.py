@@ -15,8 +15,7 @@ ACTION_SPEC = """You can also DO things, not just talk. To create or complete so
 Valid ops and fields (dates YYYY-MM-DD, times HH:MM 24h):
 - {"op": "create_goal", "title": "...", "category": "health|study|career|money|social|home", "target_date": "2026-11-01"}
 - {"op": "create_task", "title": "...", "kind": "goal|chore|study|rest|social", "minutes": 30, "energy_cost": 1, "due_date": "2026-10-04", "start_time": "18:30", "goal_title": "Run 5k"}
-- {"op": "create_subtask", "parent_task_title": "...", "title": "...", "minutes": 20}
-- {"op": "create_event", "title": "...", "kind": "hackathon|social|multi-company|learning", "date": "2026-10-09", "location": "...", "topic": "...", "description": "..."}
+- {"op": "create_event", "title": "...", "kind": "hackathon|social|multi-company|learning", "date": "2026-10-09", "start_time": "18:30", "location": "...", "topic": "...", "description": "..."}
 - {"op": "complete_task", "title": "..."}
 Rules: only use actions the user actually asked for (creating, adding, booking, done/finished). Resolve relative dates yourself ("tomorrow", "Thursday", "at 6:30pm"). Keep the visible reply short and confirm what you did in words too.
 Bias to action: if the user states something they are doing or want tracked ("tennis tomorrow 6:30", "remind me to...", "my goal is to..."), create it IMMEDIATELY and confirm — never ask "want me to add it?".
@@ -41,7 +40,8 @@ Rules:
 def user_context_summary(user=None):
     """Summarise the user's current state for the system prompt (lazy imports avoid cycles)."""
     from django.utils import timezone
-    from .models import CommunityEvent, EnergyLog, Goal, Task
+    from communities.models import Event
+    from .models import EnergyLog, Goal, Task
 
     if user is not None and user.is_authenticated:
         goals = list(Goal.objects.filter(user=user, done=False).order_by('target_date')[:8])
@@ -59,7 +59,11 @@ def user_context_summary(user=None):
             prof = 'quiz not completed yet'
     else:
         goals, tasks, energy, prof = [], [], None, 'unknown (not logged in)'
-    events = list(CommunityEvent.objects.filter(date__gte=timezone.now().date()).order_by('date')[:8])
+    events = list(
+        Event.objects.filter(starts_at__gte=timezone.now())
+        .select_related('community')
+        .order_by('starts_at')[:8]
+    )
 
     lines = []
     lines.append('Open goals: ' + ('; '.join(f'{g.title} [{g.get_category_display()}]' for g in goals) if goals else 'none'))
@@ -67,7 +71,7 @@ def user_context_summary(user=None):
         f'{t.title} ({t.get_kind_display()}, {t.minutes}m, energy {t.energy_cost}' +
         (f', due {t.due_date}' if t.due_date else '') + ')' for t in tasks) if tasks else 'none'))
     lines.append(f'Latest energy: {energy.level}/5 on {energy.date}' + (f' ({energy.note})' if energy and energy.note else '') if energy else 'Latest energy: not logged yet')
-    lines.append('Upcoming events: ' + ('; '.join(f'{e.title} ({e.get_kind_display()}, {e.date})' for e in events) if events else 'none'))
+    lines.append('Upcoming events: ' + ('; '.join(f'{e.title} ({e.get_kind_display()}, {e.starts_at:%Y-%m-%d %H:%M}, {e.community.name})' for e in events) if events else 'none'))
     lines.append('Person profile: ' + prof)
     return '\n'.join(lines)
 
@@ -132,21 +136,38 @@ def _parse_time(s):
         return None
 
 
-def _find_task(user, title):
-    from .models import Task
-    qs = Task.objects.filter(user=user, title__icontains=title).order_by('done', 'due_date')
-    return qs.first()
-
-
 def _find_goal(user, title):
     from .models import Goal
     return Goal.objects.filter(user=user, title__icontains=title).order_by('done').first()
 
 
+def _community_for(user):
+    """The community an assistant-created event should belong to.
+
+    Prefer the one the user created, then any they have joined. Events can't
+    exist without a community, so this may return ``None``.
+    """
+    from communities.models import Community, Membership
+    community = Community.objects.filter(created_by=user).first()
+    if community is not None:
+        return community
+    membership = Membership.objects.filter(user=user).select_related('community').first()
+    return membership.community if membership else None
+
+
+def _parse_datetime(day, time_str):
+    """Combine a date with an optional HH:MM time (default 18:00) into an aware datetime."""
+    from datetime import datetime, time as _time
+    from django.utils import timezone
+    start = _parse_time(time_str) or _time(18, 0)
+    return timezone.make_aware(datetime.combine(day, start))
+
+
 def apply_actions(user, reply):
     """Execute ```action {...}``` blocks in the model reply against the user's data.
     Returns the reply with blocks replaced by human confirmations."""
-    from .models import CommunityEvent, EventAttendee, Goal, Task
+    from communities.models import Event, EventRSVP
+    from .models import Goal, Task
 
     notes = []
 
@@ -180,34 +201,27 @@ def apply_actions(user, reply):
                                        start_time=_parse_time(op.get('start_time')), goal=goal)
             when = f' for {task.due_date}' + (f' at {task.start_time:%H:%M}' if task.start_time else '') if task.due_date else ''
             return f"Added '{task.title}'{when}."
-        if kind == 'create_subtask':
-            parent = _find_task(user, op.get('parent_task_title', ''))
-            title = (op.get('title') or '').strip()
-            if parent is None:
-                return f"Couldn't find a task matching '{op.get('parent_task_title', '')}'."
-            if not title:
-                return "Couldn't create a sub-task with no title."
-            try:
-                minutes = max(5, int(op.get('minutes', 20)))
-            except (TypeError, ValueError):
-                minutes = 20
-            Task.objects.create(user=user, parent=parent, title=title, kind=parent.kind,
-                                minutes=minutes, energy_cost=parent.energy_cost, goal=parent.goal)
-            return f"Added sub-task '{title}' under '{parent.title}'."
         if kind == 'create_event':
             title = (op.get('title') or '').strip()
             day = _parse_date(op.get('date'))
             if not title or not day:
                 return "Couldn't create that event — I need a name and a date."
-            ekind = op.get('kind') if op.get('kind') in dict(CommunityEvent.KINDS) else 'social'
-            event = CommunityEvent.objects.filter(title__iexact=title, date=day).first()
+            community = _community_for(user)
+            if community is None:
+                return "Events live inside a community — create or join one first, then I'll add it."
+            ekind = op.get('kind') if op.get('kind') in dict(Event.KINDS) else 'social'
+            starts_at = _parse_datetime(day, op.get('start_time'))
+            event = Event.objects.filter(community=community, title__iexact=title, starts_at=starts_at).first()
             created = event is None
             if created:
-                event = CommunityEvent.objects.create(
-                    title=title, kind=ekind, date=day, location=op.get('location', ''),
+                event = Event.objects.create(
+                    community=community, created_by=user, title=title, kind=ekind,
+                    starts_at=starts_at, location=op.get('location', ''),
                     topic=op.get('topic', ''), description=op.get('description', ''))
-            EventAttendee.objects.get_or_create(event=event, user=user)
-            return f"Added event '{event.title}' on {event.date} — you're on the list." if created else f"Event '{event.title}' already exists — you're on the list."
+            EventRSVP.objects.get_or_create(event=event, user=user)
+            if created:
+                return f"Added event '{event.title}' in {community.name} on {event.starts_at:%a %d %b %H:%M} — you're on the list."
+            return f"Event '{event.title}' already exists — you're on the list."
         if kind == 'complete_task':
             task = Task.objects.filter(user=user, done=False, title__icontains=op.get('title', '')).order_by('due_date').first()
             if task is None:

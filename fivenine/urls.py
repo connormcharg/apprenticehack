@@ -6,6 +6,7 @@ from . import views
 urlpatterns = [
     path('manifest.webmanifest', views.manifest, name='manifest'),
     path('sw.js', views.service_worker, name='service_worker'),
+    path('offline/', views.offline, name='offline'),
     path('signup/', views.signup, name='signup'),
     path('login/', auth_views.LoginView.as_view(template_name='fivenine/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
@@ -14,10 +15,6 @@ urlpatterns = [
     path('goals/<int:pk>/toggle/', views.goal_toggle, name='goal_toggle'),
     path('tasks/<int:pk>/toggle/', views.task_toggle, name='task_toggle'),
     path('tasks/<int:pk>/', views.task_detail, name='task_detail'),
-    path('events/', views.event_list, name='event_list'),
-    path('events/<int:pk>/join/', views.event_join, name='event_join'),
-    path('events/<int:pk>/leave/', views.event_leave, name='event_leave'),
-    path('events/<int:pk>/', views.event_detail, name='event_detail'),
     path('household/', views.household, name='household'),
     path('calendar/', views.calendar_view, name='calendar'),
     path('calendar/feed-<uuid:token>.ics', views.ics_feed, name='ics_feed'),

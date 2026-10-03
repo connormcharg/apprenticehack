@@ -10,7 +10,6 @@
 <link rel="stylesheet" href="{% static 'fivenine/style.css' %}">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/svg+xml" href="{% static 'fivenine/icons/icon.svg' %}">
 <link rel="icon" type="image/png" sizes="192x192" href="{% static 'fivenine/icons/icon-192.png' %}">
 <link rel="icon" type="image/png" sizes="512x512" href="{% static 'fivenine/icons/icon-512.png' %}">
 <link rel="apple-touch-icon" href="{% static 'fivenine/icons/icon-192.png' %}">
@@ -194,6 +193,15 @@ window.renderChatMarkdown = function (src) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+  // Clear cached pages on logout so the next person on a shared device
+  // doesn't see the previous account's data.
+  document.querySelectorAll('form[action$="/logout/"]').forEach((form) => {
+    form.addEventListener('submit', () => {
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage('CLEAR_CACHE');
+      }
+    });
   });
 }
 </script>

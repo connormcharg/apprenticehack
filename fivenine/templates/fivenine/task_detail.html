@@ -9,16 +9,7 @@
     <div><dt>Energy</dt><dd>{{ task.get_energy_cost_display }}</dd></div>
     {% if task.due_date %}<div><dt>Due</dt><dd>{{ task.due_date|date:'l j M' }}{% if task.start_time %} · {{ task.start_time|time:'H:i' }}{% endif %}</dd></div>{% endif %}
     {% if task.goal %}<div><dt>Goal</dt><dd>{{ task.goal.title }}</dd></div>{% endif %}
-    {% if task.parent %}<div><dt>Part of</dt><dd><a href="{% url 'task_detail' task.parent.pk %}">{{ task.parent.title }}</a></dd></div>{% endif %}
   </dl>
-  {% if task.subtasks.all %}
-  <section class="detail-section" aria-label="Sub-tasks">
-    <h2>Sub-tasks</h2>
-    {% for s in task.subtasks.all %}
-    <p class="subtask"><strong>{% if s.done %}Done — {% endif %}{{ s.title }}</strong> <small>{{ s.minutes }}m</small> · <a href="{% url 'task_toggle' s.pk %}?next=/tasks/{{ task.pk }}/">{% if s.done %}Reopen{% else %}Done{% endif %}</a></p>
-    {% endfor %}
-  </section>
-  {% endif %}
   <form method="post" class="detail-form">{% csrf_token %}
     <p><label for="id_task_title">Title</label><input id="id_task_title" type="text" name="title" value="{{ task.title }}"></p>
     <p class="form-row">

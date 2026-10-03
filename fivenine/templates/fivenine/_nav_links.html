@@ -3,6 +3,5 @@
 <a class="nav-link{% if url == 'goal_list' or url == 'task_detail' %} is-active{% endif %}" href="{% url 'goal_list' %}"{% if url == 'goal_list' or url == 'task_detail' %} aria-current="page"{% endif %}><i class="ph-bold ph-target" aria-hidden="true"></i> Goals</a>
 <a class="nav-link{% if url == 'household' %} is-active{% endif %}" href="{% url 'household' %}"{% if url == 'household' %} aria-current="page"{% endif %}><i class="ph-bold ph-broom" aria-hidden="true"></i> Household</a>
 <a class="nav-link{% if url == 'calendar' %} is-active{% endif %}" href="{% url 'calendar' %}"{% if url == 'calendar' %} aria-current="page"{% endif %}><i class="ph-bold ph-calendar" aria-hidden="true"></i> Calendar</a>
-<a class="nav-link{% if url == 'event_list' or url == 'event_detail' %} is-active{% endif %}" href="{% url 'event_list' %}"{% if url == 'event_list' or url == 'event_detail' %} aria-current="page"{% endif %}><i class="ph-bold ph-ticket" aria-hidden="true"></i> Events</a>
 <a class="nav-link{% if ns == 'communities' %} is-active{% endif %}" href="{% url 'communities:list' %}"{% if ns == 'communities' %} aria-current="page"{% endif %}><i class="ph-bold ph-users" aria-hidden="true"></i> Communities</a>
 {% endwith %}

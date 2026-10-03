@@ -47,7 +47,7 @@
   <article class="event-card">
     <div class="event-body">
       <h3>{{ event.title }}</h3>
-      <p class="event-meta muted">{{ event.starts_at|date:"D j M, H:i" }}{% if event.location %} · {{ event.location }}{% endif %} · {{ event.attendee_count }} going</p>
+      <p class="event-meta muted"><span class="badge">{{ event.get_kind_display }}</span>{% if event.topic %} <span class="badge">{{ event.topic }}</span>{% endif %} {{ event.starts_at|date:"D j M, H:i" }}{% if event.location %} · {{ event.location }}{% endif %} · {{ event.attendee_count }} going</p>
       {% if event.description %}<p>{{ event.description }}</p>{% endif %}
       <div class="event-actions">
         {% if event.pk in my_event_ids %}

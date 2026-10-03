@@ -1,8 +1,8 @@
 {% extends 'fivenine/base.html' %}
 {% block title %}Communities · Life 5-9{% endblock %}
 {% block content %}
-<h1 class="page-title">Communities</h1>
-<p class="page-sub">Find apprentices at your company, in your town or working with your stack — then meet up and chat.</p>
+<h1 class="page-title">Communities &amp; events</h1>
+<p class="page-sub">Find apprentices at your company, in your town or working with your stack — then meet up, attend events and chat.</p>
 
 {% if created %}
   <p><a class="cta" href="{% url 'communities:detail' created.pk %}">Go to my community: {{ created.name }}</a></p>
@@ -22,6 +22,26 @@
   {% endfor %}
 </section>
 {% endif %}
+
+<section class="card" aria-labelledby="comm-events-heading">
+  <h3 id="comm-events-heading">Upcoming events</h3>
+  <nav class="seg" aria-label="Filter events by type">
+    <a href="{% url 'communities:list' %}"{% if not active_event_kind %} class="is-active" aria-current="true"{% endif %}>All</a>
+    {% for value, label in event_kinds %}
+    <a href="?event_kind={{ value }}"{% if active_event_kind == value %} class="is-active" aria-current="true"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+  {% for event in upcoming_events %}
+  <p>
+    <span class="badge">{{ event.get_kind_display }} · {{ event.starts_at|date:'D j M, H:i' }}</span><br>
+    <strong><a href="{% url 'communities:detail' event.community_id %}">{{ event.title }}</a></strong>
+    <small>— in {{ event.community.name }}</small><br>
+    <small>{% if event.location %}{{ event.location }} · {% endif %}{{ event.attendee_count }} going</small>
+  </p>
+  {% empty %}
+  <p class="muted">No upcoming events yet. Join a community to see and add meet-ups.</p>
+  {% endfor %}
+</section>
 
 <details class="filter-details" id="community-filters">
   <summary>Filter{% if filters.q or filters.company or filters.city or filters.country or filters.technology or filters.scope %}<span class="filter-dot" aria-hidden="true"></span><span class="is-hidden"> (active)</span>{% endif %}</summary>

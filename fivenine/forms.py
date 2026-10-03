@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import CommunityEvent, EnergyLog, Goal, Task
+from .models import EnergyLog, Goal, Task
 
 
 class SignupForm(UserCreationForm):
@@ -19,7 +19,7 @@ class GoalForm(forms.ModelForm):
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ['title', 'kind', 'goal', 'parent', 'minutes', 'energy_cost', 'due_date', 'start_time']
+        fields = ['title', 'kind', 'goal', 'minutes', 'energy_cost', 'due_date', 'start_time']
         widgets = {'due_date': forms.DateInput(attrs={'type': 'date'}),
                    'start_time': forms.TimeInput(attrs={'type': 'time'})}
 
@@ -28,11 +28,4 @@ class EnergyForm(forms.ModelForm):
     class Meta:
         model = EnergyLog
         fields = ['date', 'level', 'note']
-        widgets = {'date': forms.DateInput(attrs={'type': 'date'})}
-
-
-class EventForm(forms.ModelForm):
-    class Meta:
-        model = CommunityEvent
-        fields = ['title', 'kind', 'topic', 'date', 'location', 'description']
         widgets = {'date': forms.DateInput(attrs={'type': 'date'})}
