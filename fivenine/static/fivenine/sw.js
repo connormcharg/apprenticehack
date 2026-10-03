@@ -1,4 +1,4 @@
-const CACHE = 'five-nine-v2';
+const CACHE = 'five-nine-v3';
 const CORE = ['/home/', '/static/fivenine/style.css', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
@@ -12,12 +12,15 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  // Never cache: non-GET, API calls, redirects/auth bounces — only plain 200 pages.
+  if (e.request.method !== 'GET' || e.request.url.includes('/api/')) return;
   e.respondWith(
     fetch(e.request).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(e.request, copy));
+      if (res.status === 200 && res.type === 'basic') {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+      }
       return res;
-    }).catch(() => caches.match(e.request).then((hit) => hit || caches.match('/')))
+    }).catch(() => caches.match(e.request).then((hit) => hit || caches.match('/home/')))
   );
 });

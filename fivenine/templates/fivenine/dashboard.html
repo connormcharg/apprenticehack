@@ -83,9 +83,9 @@
     <h3>Evening budget</h3>
     {% if profile %}
     <p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} eve/wk × {{ profile.minutes_per_evening }}m</span></p>
-    <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'quiz' %}">retake quiz</a></p>
+    <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'onboarding:evenings' %}">edit evenings</a></p>
     {% else %}
-    <p><a href="{% url 'quiz' %}">Take the quiz</a> to personalise your plan.</p>
+    <p><a href="{% url 'onboarding:evenings' %}">Shape your evenings</a> to personalise your plan.</p>
     {% endif %}
   </div>
 </section>

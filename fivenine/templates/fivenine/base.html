@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{% block title %}5-9 Planner — life after work{% endblock %}</title>
 <meta name="description" content="A 5-9 life planner for apprentices: goals, household, study and rest without burnout.">
-<meta name="theme-color" content="#14101f">
+<meta name="theme-color" content="#eef2ff">
 {% load static %}
 <link rel="stylesheet" href="{% static 'fivenine/style.css' %}">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
@@ -43,9 +43,10 @@
   <a href="{% url 'dashboard' %}"><i class="ph-bold ph-house"></i> Home</a>
   <a href="{% url 'evening_plan' %}"><i class="ph-bold ph-moon-stars"></i> Plan</a>
   <a href="{% url 'goal_list' %}"><i class="ph-bold ph-target"></i> Goals</a>
+  <a href="{% url 'household' %}"><i class="ph-bold ph-broom"></i> Household</a>
   <a href="{% url 'event_list' %}"><i class="ph-bold ph-users"></i> Community</a>
   <a href="{% url 'calendar' %}"><i class="ph-bold ph-calendar"></i> Calendar</a>
-  <div class="drawer-foot"><small>Signed in as {{ user.username }}</small></div>
+  <div class="drawer-foot"><small>Signed in as {{ display_name|default:user.username }}</small></div>
 </nav>
 <div id="nav-scrim" hidden></div>
 {% endif %}

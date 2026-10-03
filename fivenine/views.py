@@ -10,8 +10,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .forms import EnergyForm, EventForm, GoalForm, PlanForm, QuizForm, SignupForm, TaskForm
-from .models import CommunityEvent, EnergyLog, EventAttendee, Goal, Task, UserProfile
+from .forms import EnergyForm, EventForm, GoalForm, PlanForm, SignupForm, TaskForm
+from .models import CommunityEvent, EnergyLog, EventAttendee, Goal, Task, UserProfile, display_name_for
 
 
 def manifest(request):
@@ -33,37 +33,9 @@ def signup(request):
     if request.method == 'POST' and form.is_valid():
         user = form.save()
         login(request, user)
-        messages.success(request, 'Account created! Quick quiz so we can tailor your 5-9.')
-        return redirect('quiz')
+        messages.success(request, 'Account created! Tell us about yourself.')
+        return redirect('onboarding:about_you')
     return render(request, 'fivenine/signup.html', {'form': form})
-
-
-@login_required
-def quiz(request):
-    """First-login quiz: person type + time commitment + company/skills/location."""
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
-    first_time = not profile.quiz_done
-    form = QuizForm(request.POST or None, instance=profile)
-    if request.method == 'POST' and form.is_valid():
-        profile = form.save(commit=False)
-        profile.quiz_done = True
-        profile.save()
-        if first_time:
-            for line in (form.cleaned_data.get('weekly_tasks') or '').splitlines():
-                title = line.strip().lstrip('-*• ').strip()
-                if title and not Task.objects.filter(user=request.user, title__iexact=title).exists():
-                    Task.objects.create(user=request.user, title=title, kind='chore', minutes=30, energy_cost=1)
-            first_goal = (form.cleaned_data.get('first_goal') or '').strip()
-            if first_goal and not Goal.objects.filter(user=request.user, title__iexact=first_goal).exists():
-                Goal.objects.create(user=request.user, title=first_goal,
-                                    category=form.cleaned_data.get('first_goal_category') or 'career')
-        messages.success(request, 'All set! Here is your 5-9.')
-        return redirect('dashboard')
-    return render(request, 'fivenine/quiz.html', {'form': form})
-
-
-def needs_quiz(user):
-    return not UserProfile.objects.filter(user=user, quiz_done=True).exists()
 
 
 def get_profile(user):
@@ -90,8 +62,6 @@ def burnout_warning(user):
 def dashboard(request):
     """Home: today-only day view + capacity + energy check-in."""
     from datetime import timedelta as _td
-    if needs_quiz(request.user):
-        return redirect('quiz')
     user = request.user
     today = timezone.now().date()
     selected = today
@@ -160,7 +130,7 @@ def dashboard(request):
     recs = recommend_events(user, 1)
     recommendation = {'event': recs[0][0], 'reason': recs[0][1]} if recs else None
     return render(request, 'fivenine/dashboard.html', {
-        'greeting': greeting, 'name': user.username.capitalize(),
+        'greeting': greeting, 'name': display_name_for(user),
         'date_label': f'{selected:%A} · {selected.day} {selected:%B}'.upper(),
         'today': today, 'selected': selected,
         'slots': slots, 'overdue': overdue,
@@ -215,8 +185,13 @@ def goal_list(request):
         cards.append({'goal': g, 'done': done, 'total': total,
                       'pct': round(100 * done / total) if total else 0,
                       'steps': goal_next_steps(g)})
+    from datetime import timedelta as _td
+    today = timezone.now().date()
+    monday = today - _td(days=today.weekday())
+    week_actions = Task.objects.filter(
+        user=user, done=False, due_date__range=(monday, monday + _td(days=6))).order_by('due_date')
     return render(request, 'fivenine/goals.html',
-                  {'cards': cards, 'top_tasks': top_tasks,
+                  {'cards': cards, 'top_tasks': top_tasks, 'week_actions': week_actions,
                    'goal_form': goal_form, 'task_form': task_form})
 
 
@@ -342,6 +317,63 @@ def event_join(request, pk):
 def event_leave(request, pk):
     EventAttendee.objects.filter(event_id=pk, user=request.user).delete()
     return redirect(request.GET.get('next', 'event_list'))
+
+
+HOUSEHOLD_STARTERS = [
+    ('shop', 'Food shop', 60, 2, 'Most apprentices do a big shop weekly.'),
+    ('laundry', 'Laundry + put away', 40, 1, 'Small loads beat mountain day.'),
+    ('bathroom', 'Clean bathroom', 30, 2, 'Twenty focused minutes does it.'),
+    ('bins', 'Bins out + quick tidy', 20, 1, 'Tie it to bin day so you never miss it.'),
+    ('cook', 'Meal-prep lunches', 60, 2, 'Cook once, eat cheap all week.'),
+    ('reset', '15-minute reset', 15, 1, 'Low-energy friendly: one room, one timer.'),
+]
+
+
+@login_required
+def household(request):
+    """Household hub: open chores, recommendations, one-tap weekly planning."""
+    from datetime import timedelta as _td
+    user = request.user
+    chores = Task.objects.filter(user=user, kind='chore').order_by('done', 'due_date')
+    open_chores = chores.filter(done=False)
+
+    if request.method == 'POST':
+        if 'add' in request.POST:
+            key = request.POST['add']
+            match = next((s for s in HOUSEHOLD_STARTERS if s[0] == key), None)
+            if match is not None and not Task.objects.filter(user=user, title__iexact=match[1]).exists():
+                Task.objects.create(user=user, title=match[1], kind='chore',
+                                    minutes=match[2], energy_cost=match[3])
+                messages.success(request, f"Added '{match[1]}'.")
+            return redirect('household')
+        if 'plan' in request.POST:
+            profile = get_profile(user)
+            evenings = profile.evenings_per_week if profile else 4
+            undated = list(open_chores.filter(due_date__isnull=True).order_by('energy_cost'))
+            today = timezone.now().date()
+            for i, chore in enumerate(undated):
+                chore.due_date = today + _td(days=i % max(1, evenings))
+                chore.save(update_fields=['due_date'])
+            messages.success(request, f'Spread {len(undated)} chores across your evenings.')
+            return redirect('household')
+
+    known = ' '.join(t.title.lower() for t in open_chores)
+    recent = EnergyLog.objects.filter(user=user).order_by('-date', '-created_at')[:3]
+    low_energy = len(recent) >= 2 and sum(e.level for e in recent) / len(recent) <= 2.2
+    suggestions = []
+    for key, title, minutes, energy, reason in HOUSEHOLD_STARTERS:
+        if key == 'reset' and not low_energy:
+            continue
+        if key != 'reset' and key in known:
+            continue
+        if Task.objects.filter(user=user, title__iexact=title).exists():
+            continue
+        suggestions.append({'key': key, 'title': title, 'minutes': minutes,
+                            'energy': energy, 'reason': reason})
+    undated_count = open_chores.filter(due_date__isnull=True).count()
+    return render(request, 'fivenine/household.html', {
+        'chores': chores, 'suggestions': suggestions, 'undated_count': undated_count,
+    })
 
 
 def recommend_events(user, limit=3):

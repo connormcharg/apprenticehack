@@ -9,8 +9,9 @@ class SignupForm(UserCreationForm):
         fields = ('username',)
 
 
-class QuizForm(forms.ModelForm):
-    """First-login quiz: person type + time commitment + professional bits."""
+class EveningsForm(forms.ModelForm):
+    """Step 3 of onboarding: how the 5-9 should work.
+    Company/location/skills come from the onboarding profile, not asked twice."""
     weekly_tasks = forms.CharField(
         required=False, widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'e.g. food shop\nlaundry\nclean bathroom'}),
         help_text='One per line — each becomes a household task.')
@@ -23,7 +24,7 @@ class QuizForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['person_type', 'chronotype', 'evenings_per_week', 'minutes_per_evening',
-                  'social_balance', 'task_style', 'company', 'location', 'skills']
+                  'social_balance', 'task_style']
         widgets = {
             'person_type': forms.RadioSelect,
             'chronotype': forms.RadioSelect,

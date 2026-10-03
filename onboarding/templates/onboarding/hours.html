@@ -9,10 +9,10 @@
 
 {% block content %}
 <section class="card" aria-labelledby="hours-title">
-  <p class="eyebrow">Step 2 of 2 &middot; Your time</p>
+  <p class="eyebrow">Step 2 of 3 &middot; Your time</p>
   <div class="progress" role="progressbar" aria-valuenow="2" aria-valuemin="0"
-       aria-valuemax="2" aria-label="Step 2 of 2">
-    <span class="progress__bar progress__bar--full"></span>
+       aria-valuemax="3" aria-label="Step 2 of 3">
+    <span class="progress__bar" style="width:66%"></span>
   </div>
   <h1 class="card__title" id="hours-title">Now, how do your days look?</h1>
 
@@ -59,13 +59,14 @@
 
     <div class="actions">
       <button type="submit" class="button button--primary">
-        Finish
+        Continue
         <svg class="button__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
           <path d="M3.5 10h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.8"
                 stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button type="submit" name="skip" value="1" class="button button--ghost">Skip for now</button>
+      <span class="actions__note">Next: your evenings.</span>
     </div>
   </form>
 </section>

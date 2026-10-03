@@ -140,6 +140,58 @@ def hours(request):
     return render(request, "onboarding/hours.html", {"form": form})
 
 
+@require_http_methods(["GET", "POST"])
+def evenings(request):
+    """Step 3: how the 5-9 should work — person type, time, balance, first tasks."""
+    from fivenine.forms import EveningsForm
+    from fivenine.models import Goal, Task, UserProfile
+
+    if not request.user.is_authenticated:
+        return redirect("onboarding:sign_in")
+
+    apprentice = _profile_for(request.user)
+    if apprentice is None:
+        return redirect("onboarding:about_you")
+
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    first_time = not profile.quiz_done
+    # Professional bits live in the onboarding profile — keep them in sync.
+    synced = {}
+    if apprentice.company:
+        synced["company"] = apprentice.company
+    if apprentice.location:
+        synced["location"] = apprentice.location
+    techs = ", ".join(t.name for t in apprentice.technologies.all())
+    if techs:
+        synced["skills"] = techs
+    if synced:
+        for key, value in synced.items():
+            setattr(profile, key, value)
+        profile.save(update_fields=list(synced))
+
+    form = EveningsForm(request.POST or None, instance=profile)
+    for name in ("evenings_per_week", "minutes_per_evening",
+                 "weekly_tasks", "first_goal", "first_goal_category"):
+        form.fields[name].widget.attrs.setdefault("class", "field__input")
+
+    if request.method == "POST" and form.is_valid():
+        profile = form.save(commit=False)
+        profile.quiz_done = True
+        profile.save()
+        if first_time:
+            for line in (form.cleaned_data.get("weekly_tasks") or "").splitlines():
+                title = line.strip().lstrip("-*• ").strip()
+                if title and not Task.objects.filter(user=request.user, title__iexact=title).exists():
+                    Task.objects.create(user=request.user, title=title, kind="chore",
+                                        minutes=30, energy_cost=1)
+            first_goal = (form.cleaned_data.get("first_goal") or "").strip()
+            if first_goal and not Goal.objects.filter(user=request.user, title__iexact=first_goal).exists():
+                Goal.objects.create(user=request.user, title=first_goal,
+                                    category=form.cleaned_data.get("first_goal_category") or "career")
+        return redirect("onboarding:welcome")
+    return render(request, "onboarding/evenings.html", {"form": form})
+
+
 @require_GET
 def welcome(request):
     """Confirmation screen shown once onboarding is done."""

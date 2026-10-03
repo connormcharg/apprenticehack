@@ -5,6 +5,21 @@ from django.db import models
 from django.utils import timezone
 
 
+def display_name_for(user):
+    """Real name for greetings — never a raw email/username handle."""
+    try:
+        from onboarding.models import Apprentice
+        ap = Apprentice.objects.filter(user=user).first()
+        if ap is not None and ap.first_name:
+            return ap.first_name
+    except Exception:
+        pass
+    if getattr(user, 'first_name', ''):
+        return user.first_name
+    handle = (getattr(user, 'email', '') or user.username).split('@')[0]
+    return handle.replace('.', ' ').replace('_', ' ').strip().title() or 'there'
+
+
 class UserProfile(models.Model):
     """Onboarding quiz answers: who you are + how much 5-9 time you'll commit."""
     PERSON_TYPES = [
