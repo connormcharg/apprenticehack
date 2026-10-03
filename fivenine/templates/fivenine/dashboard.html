@@ -1,5 +1,15 @@
 {% extends 'fivenine/base.html' %}
 {% block content %}
+{% if show_intro %}
+<section class="card intro">
+  <h2>Welcome to your 5-9</h2>
+  <p class="muted">Built for apprentices juggling work, uni and life. Three steps to get going:</p>
+  <p><strong>1.</strong> <a href="{% url 'onboarding:quiz' %}">Take the 60-second quiz</a> — free time, weekly tasks, first goal.<br>
+  <strong>2.</strong> Add anything with the <strong>+</strong> button in plain English ("tennis tomorrow 6:30").<br>
+  <strong>3.</strong> <a href="{% url 'event_list' %}">Find your community</a> — hackathons, socials, societies.</p>
+</section>
+{% endif %}
+
 <section class="hero-banner">
   <div>
     <p class="eyebrow-lite">{{ date_label }}</p>
@@ -83,9 +93,9 @@
     <h3>Evening budget</h3>
     {% if profile %}
     <p><span class="badge">{{ profile.get_person_type_display }}</span> <span class="badge">{{ profile.evenings_per_week }} eve/wk × {{ profile.minutes_per_evening }}m</span></p>
-    <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'onboarding:evenings' %}">edit evenings</a></p>
+    <p class="muted">{{ profile.get_chronotype_display }} · {{ profile.get_social_balance_display }} · <a href="{% url 'onboarding:quiz' %}">edit evenings</a></p>
     {% else %}
-    <p><a href="{% url 'onboarding:evenings' %}">Shape your evenings</a> to personalise your plan.</p>
+    <p><a href="{% url 'onboarding:quiz' %}">Shape your evenings</a> to personalise your plan.</p>
     {% endif %}
   </div>
 </section>

@@ -1,0 +1,14 @@
+{% comment %}
+Radio choices for the onboarding quiz, rendered as stacked cards.
+
+Set as the widget's `template_name` (see onboarding.forms.ChoiceSelect). The
+wrapper carries the field's id and is focusable so the error-summary links can
+jump to the group.
+{% endcomment %}
+<div class="choice-list"{% if widget.attrs.id %} id="{{ widget.attrs.id }}"{% endif %} tabindex="-1">
+  {% for group, options, index in widget.optgroups %}
+    {% for option in options %}
+      {% include option.template_name with widget=option %}
+    {% endfor %}
+  {% endfor %}
+</div>

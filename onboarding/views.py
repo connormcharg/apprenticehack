@@ -4,7 +4,9 @@ from django.db import transaction
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
 
-from .forms import OnboardingForm, SignInForm, SignUpForm, WorkingHoursForm
+from fivenine.models import Goal, Task, UserProfile
+
+from .forms import OnboardingForm, QuizForm, SignInForm, SignUpForm, WorkingHoursForm
 from .models import Apprentice, Technology
 
 
@@ -119,7 +121,7 @@ def hours(request):
 
     if request.method == "POST":
         if "skip" in request.POST:
-            return redirect("onboarding:welcome")
+            return redirect("onboarding:quiz")
 
         form = WorkingHoursForm(request.POST)
         if form.is_valid():
@@ -127,7 +129,7 @@ def hours(request):
             apprentice.work_end = form.cleaned_data["work_end"]
             apprentice.free_time_hours = form.cleaned_data["free_time_hours"]
             apprentice.save()
-            return redirect("onboarding:welcome")
+            return redirect("onboarding:quiz")
     else:
         form = WorkingHoursForm(
             initial={
@@ -140,12 +142,32 @@ def hours(request):
     return render(request, "onboarding/hours.html", {"form": form})
 
 
-@require_http_methods(["GET", "POST"])
-def evenings(request):
-    """Step 3: how the 5-9 should work — person type, time, balance, first tasks."""
-    from fivenine.forms import EveningsForm
-    from fivenine.models import Goal, Task, UserProfile
+def _seed_from_quiz(user, cleaned):
+    """Turn the quiz's free-text answers into starter tasks and a goal."""
+    for line in (cleaned.get("weekly_tasks") or "").splitlines():
+        title = line.strip().lstrip("-*• ").strip()
+        if title and not Task.objects.filter(user=user, title__iexact=title).exists():
+            Task.objects.create(
+                user=user, title=title, kind="chore", minutes=30, energy_cost=1
+            )
 
+    first_goal = (cleaned.get("first_goal") or "").strip()
+    if first_goal and not Goal.objects.filter(user=user, title__iexact=first_goal).exists():
+        Goal.objects.create(
+            user=user,
+            title=first_goal,
+            category=cleaned.get("first_goal_category") or "career",
+        )
+
+
+@require_http_methods(["GET", "POST"])
+def quiz(request):
+    """Step 3: the 5-9 preferences that tune the planner.
+
+    This is the quiz that used to be a separate page after sign-up; it now
+    completes onboarding. The professional details are already collected in
+    step 1, so they are copied onto the profile rather than asked again.
+    """
     if not request.user.is_authenticated:
         return redirect("onboarding:sign_in")
 
@@ -153,43 +175,28 @@ def evenings(request):
     if apprentice is None:
         return redirect("onboarding:about_you")
 
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile, _created = UserProfile.objects.get_or_create(user=request.user)
     first_time = not profile.quiz_done
-    # Professional bits live in the onboarding profile — keep them in sync.
-    synced = {}
-    if apprentice.company:
-        synced["company"] = apprentice.company
-    if apprentice.location:
-        synced["location"] = apprentice.location
-    techs = ", ".join(t.name for t in apprentice.technologies.all())
-    if techs:
-        synced["skills"] = techs
-    if synced:
-        for key, value in synced.items():
-            setattr(profile, key, value)
-        profile.save(update_fields=list(synced))
-
-    form = EveningsForm(request.POST or None, instance=profile)
-    for name in ("evenings_per_week", "minutes_per_evening",
-                 "weekly_tasks", "first_goal", "first_goal_category"):
-        form.fields[name].widget.attrs.setdefault("class", "field__input")
+    form = QuizForm(request.POST or None, instance=profile)
 
     if request.method == "POST" and form.is_valid():
         profile = form.save(commit=False)
         profile.quiz_done = True
+        # Keep the planner's copy of the professional details in step with
+        # what step 1 collected.
+        profile.company = apprentice.company
+        profile.location = apprentice.location
+        profile.skills = ", ".join(t.name for t in apprentice.technologies.all())
         profile.save()
         if first_time:
-            for line in (form.cleaned_data.get("weekly_tasks") or "").splitlines():
-                title = line.strip().lstrip("-*• ").strip()
-                if title and not Task.objects.filter(user=request.user, title__iexact=title).exists():
-                    Task.objects.create(user=request.user, title=title, kind="chore",
-                                        minutes=30, energy_cost=1)
-            first_goal = (form.cleaned_data.get("first_goal") or "").strip()
-            if first_goal and not Goal.objects.filter(user=request.user, title__iexact=first_goal).exists():
-                Goal.objects.create(user=request.user, title=first_goal,
-                                    category=form.cleaned_data.get("first_goal_category") or "career")
-        return redirect("onboarding:welcome")
-    return render(request, "onboarding/evenings.html", {"form": form})
+            _seed_from_quiz(request.user, form.cleaned_data)
+        return redirect("onboarding:welcome" if first_time else "dashboard")
+
+    return render(
+        request,
+        "onboarding/quiz.html",
+        {"form": form, "first_time": first_time},
+    )
 
 
 @require_GET
@@ -201,7 +208,12 @@ def welcome(request):
     apprentice = _profile_for(request.user)
     if apprentice is None:
         return redirect("onboarding:about_you")
-    return render(request, "onboarding/welcome.html", {"apprentice": apprentice})
+    profile = UserProfile.objects.filter(user=request.user).first()
+    return render(
+        request,
+        "onboarding/welcome.html",
+        {"apprentice": apprentice, "profile": profile},
+    )
 
 
 sign_in = LoginView.as_view(

@@ -11,6 +11,7 @@ from onboarding import views as onboarding_views
 urlpatterns = [
     path('', onboarding_views.home, name='home'),
     path('onboarding/', include('onboarding.urls')),
+    path('communities/', include('communities.urls')),
     path('admin/', admin.site.urls),
     path('', include('fivenine.urls')),
 ]

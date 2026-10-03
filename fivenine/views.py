@@ -24,7 +24,7 @@ def service_worker(request):
     return FileResponse(open(path, 'rb'), content_type='application/javascript')
 
 
-# ---------- auth + quiz ----------
+# ---------- auth ----------
 
 def signup(request):
     if request.user.is_authenticated:
@@ -33,9 +33,13 @@ def signup(request):
     if request.method == 'POST' and form.is_valid():
         user = form.save()
         login(request, user)
-        messages.success(request, 'Account created! Tell us about yourself.')
-        return redirect('onboarding:about_you')
+        messages.success(request, 'Account created! Quick quiz so we can tailor your 5-9.')
+        return redirect('onboarding:quiz')
     return render(request, 'fivenine/signup.html', {'form': form})
+
+
+def needs_quiz(user):
+    return not UserProfile.objects.filter(user=user, quiz_done=True).exists()
 
 
 def get_profile(user):
@@ -60,8 +64,10 @@ def burnout_warning(user):
 
 @login_required
 def dashboard(request):
-    """Home: today-only day view + capacity + energy check-in."""
-    from datetime import timedelta as _td
+    """Home: greeting + week strip + selected-day schedule + energy check-in."""
+    from datetime import date as _date, timedelta as _td
+    if needs_quiz(request.user):
+        return redirect('onboarding:quiz')
     user = request.user
     today = timezone.now().date()
     selected = today

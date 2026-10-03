@@ -1,0 +1,5 @@
+{% comment %}A single radio choice, styled as a card.{% endcomment %}
+<label class="choice">
+  {% include "django/forms/widgets/input.html" %}
+  <span class="choice__text">{{ widget.label }}</span>
+</label>
