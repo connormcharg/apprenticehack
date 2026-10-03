@@ -59,7 +59,8 @@
   </dl>
 
   <div class="actions">
-    <a class="button button--primary" href="{% url 'onboarding:about_you' %}">Edit my details</a>
+    <a class="button button--primary" href="{% url 'dashboard' %}">Open my 5-9</a>
+    <a class="button button--ghost" href="{% url 'onboarding:about_you' %}">Edit my details</a>
     <a class="button button--ghost" href="{% url 'onboarding:hours' %}">
       {% if apprentice.has_working_hours %}Edit my hours{% else %}Add my hours{% endif %}
     </a>

@@ -2,7 +2,7 @@
 
 Use this account to log in and try the app locally.
 
-- URL: http://127.0.0.1:8000/login/
+- URL: http://127.0.0.1:8000/login/ (app home: http://127.0.0.1:8000/home/)
 - Username: `demo`
 - Password: `demo-pass-59`
 

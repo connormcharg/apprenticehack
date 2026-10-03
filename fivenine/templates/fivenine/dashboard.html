@@ -36,7 +36,7 @@
     {% for t in overdue %}
     <div class="slot slot-overdue">
       <div class="slot-main"><strong>{{ t.title }}</strong><small>Due {{ t.due_date }} · {{ t.minutes }} min</small></div>
-      <a class="slot-done" href="{% url 'task_toggle' t.pk %}?next=/?day={{ selected|date:'Y-m-d' }}">Done</a>
+      <a class="slot-done" href="{% url 'task_toggle' t.pk %}?next=/home/?day={{ selected|date:'Y-m-d' }}">Done</a>
     </div>
     {% endfor %}
   </div>
@@ -45,7 +45,7 @@
     {% for s in slots %}
     <div class="slot {{ s.css }}">
       <div class="slot-main"><strong>{{ s.title }}</strong><small>{{ s.meta }}</small></div>
-      {% if s.toggle %}<a class="slot-done" href="{% url 'task_toggle' s.toggle %}?next=/?day={{ selected|date:'Y-m-d' }}">Done</a>{% endif %}
+      {% if s.toggle %}<a class="slot-done" href="{% url 'task_toggle' s.toggle %}?next=/home/?day={{ selected|date:'Y-m-d' }}">Done</a>{% endif %}
     </div>
     {% empty %}
     <p class="muted">Nothing scheduled — enjoy the open evening, or <a href="{% url 'goal_list' %}">add something</a>.</p>

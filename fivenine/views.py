@@ -97,7 +97,7 @@ def dashboard(request):
             entry.user = user
             entry.save()
             messages.success(request, 'Energy logged.')
-            return redirect(f'/?day={selected.isoformat()}')
+            return redirect(f'/home/?day={selected.isoformat()}')
     else:
         eform = EnergyForm(initial={'date': today, 'level': 3})
 
